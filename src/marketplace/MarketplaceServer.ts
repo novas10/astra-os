@@ -438,24 +438,104 @@ export class MarketplaceServer {
   }
 
   private async getSkillDetails(id: string): Promise<MarketplaceSkill | null> {
+    // 1. Check local catalog first
+    const local = this.skills.get(id);
+    if (local) return local;
+
+    // 2. Check if installed locally — read SKILL.md for details
+    const localSkill = await this.readLocalSkill(id);
+    if (localSkill) return localSkill;
+
+    // 3. Try remote hub
     try {
       const resp = await fetch(`${this.remoteUrl}/skills/${id}`);
       if (!resp.ok) return null;
       return (await resp.json()) as MarketplaceSkill;
     } catch {
-      return this.skills.get(id) || null;
+      return null;
+    }
+  }
+
+  /**
+   * Read a locally installed skill's SKILL.md and construct a MarketplaceSkill from it.
+   */
+  private async readLocalSkill(skillId: string): Promise<MarketplaceSkill | null> {
+    const skillDir = path.join(this.skillsDir, skillId);
+    try {
+      const skillMd = await fs.readFile(path.join(skillDir, "SKILL.md"), "utf-8");
+      const nameMatch = skillMd.match(/^#\s+(.+)/m);
+      const descMatch = skillMd.match(/^>\s*(.+)/m);
+      const versionMatch = skillMd.match(/version:\s*(\S+)/i);
+      const categoryMatch = skillMd.match(/category:\s*(\S+)/i);
+
+      // Read all files in the skill directory
+      const files: Array<{ name: string; content: string }> = [];
+      const entries = await fs.readdir(skillDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isFile()) {
+          const content = await fs.readFile(path.join(skillDir, entry.name), "utf-8");
+          files.push({ name: entry.name, content });
+        }
+      }
+
+      return {
+        id: skillId,
+        name: nameMatch?.[1] || skillId,
+        version: versionMatch?.[1] || "local",
+        description: descMatch?.[1] || "",
+        author: "local",
+        authorId: "local",
+        category: categoryMatch?.[1] || "other",
+        tags: [],
+        downloads: 0,
+        rating: 0,
+        ratingCount: 0,
+        price: 0,
+        verified: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        readme: skillMd,
+        files,
+      };
+    } catch {
+      return null;
     }
   }
 
   async install(skillId: string, version?: string): Promise<{ success: boolean; name: string; version: string }> {
-    const url = version
-      ? `${this.remoteUrl}/skills/${skillId}/versions/${version}`
-      : `${this.remoteUrl}/skills/${skillId}`;
+    // 1. Try to install from local catalog first
+    const localCatalog = this.skills.get(skillId);
+    if (localCatalog) {
+      return this.installFromData(localCatalog);
+    }
 
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`Skill "${skillId}" not found on AstraHub`);
+    // 2. Check if it's a local directory path (for offline installs)
+    try {
+      const stat = await fs.stat(skillId);
+      if (stat.isDirectory()) {
+        return this.installFromDirectory(skillId);
+      }
+    } catch {
+      // Not a local path
+    }
 
-    const data = (await resp.json()) as MarketplaceSkill;
+    // 3. Try remote hub
+    try {
+      const url = version
+        ? `${this.remoteUrl}/skills/${skillId}/versions/${version}`
+        : `${this.remoteUrl}/skills/${skillId}`;
+
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error("Remote not available");
+
+      const data = (await resp.json()) as MarketplaceSkill;
+      return this.installFromData(data);
+    } catch {
+      throw new Error(`Skill "${skillId}" not found locally or on AstraHub. Use a local path or check your connection.`);
+    }
+  }
+
+  private async installFromData(data: MarketplaceSkill): Promise<{ success: boolean; name: string; version: string }> {
     const skillDir = path.join(this.skillsDir, data.name);
     await fs.mkdir(skillDir, { recursive: true });
 
@@ -465,8 +545,11 @@ export class MarketplaceServer {
       await fs.writeFile(filePath, file.content, "utf-8");
     }
 
-    this.installed.set(skillId, {
-      skillId,
+    // Add to local catalog
+    this.skills.set(data.id || data.name, data);
+
+    this.installed.set(data.id || data.name, {
+      skillId: data.id || data.name,
       name: data.name,
       version: data.version,
       installedAt: new Date().toISOString(),
@@ -476,6 +559,44 @@ export class MarketplaceServer {
     await this.saveRegistry();
     logger.info(`[Marketplace] Installed: ${data.name} v${data.version}`);
     return { success: true, name: data.name, version: data.version };
+  }
+
+  /**
+   * Install from a local directory (offline install).
+   */
+  private async installFromDirectory(dirPath: string): Promise<{ success: boolean; name: string; version: string }> {
+    const skillMdPath = path.join(dirPath, "SKILL.md");
+    try {
+      await fs.access(skillMdPath);
+    } catch {
+      throw new Error(`No SKILL.md found in "${dirPath}" — not a valid skill directory`);
+    }
+
+    const name = path.basename(dirPath);
+    const targetDir = path.join(this.skillsDir, name);
+    await fs.mkdir(targetDir, { recursive: true });
+
+    // Copy all files from source to target
+    const entries = await fs.readdir(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isFile()) {
+        const src = path.join(dirPath, entry.name);
+        const dst = path.join(targetDir, entry.name);
+        await fs.copyFile(src, dst);
+      }
+    }
+
+    this.installed.set(name, {
+      skillId: name,
+      name,
+      version: "local",
+      installedAt: new Date().toISOString(),
+      autoUpdate: false,
+    });
+
+    await this.saveRegistry();
+    logger.info(`[Marketplace] Installed from local: ${name}`);
+    return { success: true, name, version: "local" };
   }
 
   async uninstall(skillId: string): Promise<void> {
@@ -505,14 +626,60 @@ export class MarketplaceServer {
     files: Array<{ name: string; content: string }>;
     price?: number;
   }): Promise<{ success: boolean; id: string }> {
-    const resp = await fetch(`${this.remoteUrl}/publish`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    const id = `skill_${crypto.randomBytes(8).toString("hex")}`;
 
-    if (!resp.ok) throw new Error(`Failed to publish: ${resp.status}`);
-    return (await resp.json()) as { success: boolean; id: string };
+    // Always save to local catalog
+    const skill: MarketplaceSkill = {
+      id,
+      name: data.name,
+      version: "1.0.0",
+      description: data.description || "",
+      author: "local",
+      authorId: "local",
+      category: data.category || "other",
+      tags: data.tags || [],
+      downloads: 0,
+      rating: 0,
+      ratingCount: 0,
+      price: data.price || 0,
+      verified: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      readme: "",
+      files: data.files,
+    };
+
+    this.skills.set(id, skill);
+
+    // Write to local skills directory
+    const skillDir = path.join(this.skillsDir, data.name);
+    await fs.mkdir(skillDir, { recursive: true });
+    for (const file of data.files) {
+      const filePath = path.join(skillDir, file.name);
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.writeFile(filePath, file.content, "utf-8");
+    }
+
+    // Write manifest for sharing
+    const manifest = { id, name: data.name, version: "1.0.0", description: data.description, category: data.category, tags: data.tags, files: data.files.map((f) => f.name) };
+    await fs.writeFile(path.join(skillDir, "manifest.json"), JSON.stringify(manifest, null, 2), "utf-8");
+
+    // Try to publish to remote hub (non-blocking)
+    try {
+      const resp = await fetch(`${this.remoteUrl}/publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (resp.ok) {
+        const remote = (await resp.json()) as { id: string };
+        logger.info(`[Marketplace] Published to AstraHub: ${data.name} (${remote.id})`);
+      }
+    } catch {
+      logger.info(`[Marketplace] Published locally: ${data.name} (remote hub unavailable)`);
+    }
+
+    return { success: true, id };
   }
 
   getRouter(): Router {

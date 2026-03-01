@@ -7,6 +7,7 @@
  * Security: GatewayShield (CVE-2026-25253 prevention, CSRF, brute force, exposure detection)
  * Skills: 55+ bundled skills, SkillGenerator (23 templates), SkillMigrator (OpenClaw compat)
  * Enterprise: SSO, RBAC, Audit, Billing, Data Residency, Edge Runtime, Credential Vault
+ * Note: Vajra Trading Engine extracted to standalone project
  */
 
 import express from "express";
@@ -48,8 +49,13 @@ import { GatewayShield } from "../security/GatewayShield";
 import { CredentialVault } from "../security/CredentialVault";
 import { SkillSandbox } from "../security/SkillSandbox";
 import { SkillGenerator } from "../skills/SkillGenerator";
+import { WorkflowEngine } from "../workflow/WorkflowEngine";
+import { MemoryEngine } from "../memory/MemoryEngine";
 import { SkillMigrator } from "../skills/SkillMigrator";
 import { createSwaggerRouter } from "../docs/swagger";
+import { createCorsMiddleware } from "../middleware/cors";
+import { createRequestLogger } from "../middleware/requestLogger";
+import { globalErrorHandler, sanitizeError } from "../middleware/errorHandler";
 
 export class Gateway {
   private port: number;
@@ -77,6 +83,8 @@ export class Gateway {
   private skillSandbox: SkillSandbox;
   private skillGenerator: SkillGenerator;
   private skillMigrator: SkillMigrator;
+  private workflowEngine: WorkflowEngine;
+  private memoryEngine: MemoryEngine;
 
   // Channel adapters
   private slackAdapter: SlackAdapter;
@@ -107,12 +115,22 @@ export class Gateway {
     for (const mw of this.gatewayShield.getMiddleware()) {
       this.app.use(mw);
     }
+    // CORS (must be before routes, after security headers)
+    this.app.use(createCorsMiddleware());
+    // Request logging
+    this.app.use(createRequestLogger());
     // API docs (public, before auth middleware)
     this.app.use("/docs", createSwaggerRouter());
     this.app.use(createRateLimiter());
     this.app.use(createAuthMiddleware());
     this.server = createServer(this.app);
-    this.wss = new WebSocketServer({ server: this.server });
+    this.wss = new WebSocketServer({ noServer: true });
+    // Route WebSocket upgrades
+    this.server.on("upgrade", (request, socket, head) => {
+      this.wss.handleUpgrade(request, socket, head, (ws) => {
+        this.wss.emit("connection", ws, request);
+      });
+    });
 
     // Initialize shared subsystems
     this.agentRouter = new AgentRouter();
@@ -134,6 +152,8 @@ export class Gateway {
     this.skillSandbox = new SkillSandbox();
     this.skillGenerator = new SkillGenerator();
     this.skillMigrator = new SkillMigrator();
+    this.workflowEngine = new WorkflowEngine();
+    this.memoryEngine = new MemoryEngine("system");
 
     // Initialize channel adapters
     this.slackAdapter = new SlackAdapter();
@@ -228,7 +248,9 @@ export class Gateway {
     // ─── REST API ───
     this.app.post("/api/chat", async (req, res) => {
       const { message, sessionId, channel = "api", userId = "anonymous", model } = req.body;
-      if (!message) return res.status(400).json({ error: "message is required" });
+      if (!message || typeof message !== "string") return res.status(400).json({ error: "message is required and must be a string" });
+      if (message.length > 100_000) return res.status(400).json({ error: "message exceeds maximum length (100000 chars)" });
+      if (sessionId && typeof sessionId !== "string") return res.status(400).json({ error: "sessionId must be a string" });
 
       const sid = sessionId || uuid();
       try {
@@ -236,7 +258,8 @@ export class Gateway {
         const result = await agent.run(message);
         res.json({ response: result.response, sessionId: sid, iterations: result.iterations, toolsUsed: result.toolsUsed, healed: result.healed });
       } catch (err) {
-        res.status(500).json({ error: (err as Error).message });
+        const { status, body } = sanitizeError(err);
+        res.status(status).json(body);
       }
     });
 
@@ -337,13 +360,15 @@ export class Gateway {
     // ─── Voice Endpoint ───
     this.app.post("/api/voice/tts", async (req, res) => {
       const { text, voice_id } = req.body;
-      if (!text) return res.status(400).json({ error: "text is required" });
+      if (!text || typeof text !== "string") return res.status(400).json({ error: "text is required and must be a string" });
+      if (text.length > 10_000) return res.status(400).json({ error: "text exceeds maximum length (10000 chars)" });
       try {
         const audio = await this.voice.textToSpeech({ text, voiceId: voice_id });
         res.set("Content-Type", "audio/mpeg");
         res.send(audio);
       } catch (err) {
-        res.status(500).json({ error: (err as Error).message });
+        const { status, body } = sanitizeError(err);
+        res.status(status).json(body);
       }
     });
 
@@ -357,7 +382,8 @@ export class Gateway {
           res.json(result);
         });
       } catch (err) {
-        res.status(500).json({ error: (err as Error).message });
+        const { status, body } = sanitizeError(err);
+        res.status(status).json(body);
       }
     });
 
@@ -379,6 +405,93 @@ export class Gateway {
 
     this.app.get("/api/agents/stats", (_, res) => {
       res.json(this.agentRouter.getAgentStats());
+    });
+
+    this.app.get("/api/agents/:id", (req, res) => {
+      const agent = this.agentRouter.getAgent(req.params.id);
+      if (!agent) { res.status(404).json({ error: "Agent not found" }); return; }
+      res.json(agent);
+    });
+
+    this.app.post("/api/agents", (req, res) => {
+      const { name, model, systemPrompt } = req.body;
+      if (!name) { res.status(400).json({ error: "name is required" }); return; }
+      const id = this.agentRouter.createAgent({
+        name,
+        model: model || process.env.DEFAULT_MODEL || "gpt-4o",
+        workspaceDir: process.cwd(),
+        metadata: { systemPrompt: systemPrompt || "" },
+        skills: [],
+        channels: [],
+      });
+      res.json({ id, name });
+    });
+
+    this.app.post("/api/agents/:id/pause", (req, res) => {
+      const ok = this.agentRouter.pauseAgent(req.params.id);
+      if (!ok) { res.status(404).json({ error: "Agent not found or already paused" }); return; }
+      res.json({ success: true });
+    });
+
+    this.app.post("/api/agents/:id/resume", (req, res) => {
+      const ok = this.agentRouter.resumeAgent(req.params.id);
+      if (!ok) { res.status(404).json({ error: "Agent not found or already running" }); return; }
+      res.json({ success: true });
+    });
+
+    this.app.delete("/api/agents/:id", (req, res) => {
+      const ok = this.agentRouter.terminateAgent(req.params.id);
+      if (!ok) { res.status(404).json({ error: "Agent not found" }); return; }
+      res.json({ success: true });
+    });
+
+    // ─── Workflow API ───
+    this.app.get("/api/workflows", (_, res) => {
+      res.json(this.workflowEngine.listWorkflows());
+    });
+
+    this.app.get("/api/workflows/:id", (req, res) => {
+      const wf = this.workflowEngine.getWorkflow(req.params.id);
+      if (!wf) { res.status(404).json({ error: "Workflow not found" }); return; }
+      res.json(wf);
+    });
+
+    this.app.post("/api/workflows", (req, res) => {
+      try {
+        this.workflowEngine.registerWorkflow(req.body);
+        res.json({ success: true, id: req.body.id });
+      } catch (err) {
+        res.status(400).json({ error: (err as Error).message });
+      }
+    });
+
+    this.app.post("/api/workflows/:id/run", async (req, res) => {
+      try {
+        const run = await this.workflowEngine.startWorkflow(req.params.id, req.body.variables);
+        res.json(run);
+      } catch (err) {
+        res.status(400).json({ error: (err as Error).message });
+      }
+    });
+
+    this.app.delete("/api/workflows/:id", (req, res) => {
+      const ok = this.workflowEngine.deleteWorkflow(req.params.id);
+      if (!ok) { res.status(404).json({ error: "Workflow not found" }); return; }
+      res.json({ success: true });
+    });
+
+    // ─── Memory Search API ───
+    this.app.get("/api/memory/search", async (req, res) => {
+      const q = req.query.q as string;
+      if (!q) { res.status(400).json({ error: "q parameter is required" }); return; }
+      const mode = (req.query.mode as string) || "hybrid";
+      const topK = parseInt(req.query.topK as string) || 10;
+      try {
+        const results = await this.memoryEngine.hybridSearch(q, { mode: mode as "keyword" | "semantic" | "hybrid", topK });
+        res.json({ query: q, mode, results });
+      } catch (err) {
+        res.status(500).json({ error: (err as Error).message });
+      }
     });
 
     // ─── WebSocket — Real-time ───
@@ -430,7 +543,8 @@ export class Gateway {
     // ─── SSE Streaming Chat ───
     this.app.post("/api/chat/stream", async (req, res) => {
       const { message, sessionId, channel = "api", userId = "anonymous" } = req.body;
-      if (!message) return res.status(400).json({ error: "message is required" });
+      if (!message || typeof message !== "string") return res.status(400).json({ error: "message is required and must be a string" });
+      if (message.length > 100_000) return res.status(400).json({ error: "message exceeds maximum length (100000 chars)" });
 
       const sid = sessionId || uuid();
       res.writeHead(200, {
@@ -447,7 +561,8 @@ export class Gateway {
         res.write(`data: ${JSON.stringify({ type: "response", content: result.response, iterations: result.iterations, toolsUsed: result.toolsUsed, healed: result.healed })}\n\n`);
         res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
       } catch (err) {
-        res.write(`data: ${JSON.stringify({ type: "error", error: (err as Error).message })}\n\n`);
+        const { body } = sanitizeError(err);
+        res.write(`data: ${JSON.stringify({ type: "error", error: body.error })}\n\n`);
       }
       res.end();
     });
@@ -508,7 +623,8 @@ export class Gateway {
         const result = await this.zaloAdapter.handleWebhook(req.body);
         res.json({ success: true, response: result });
       } catch (err) {
-        res.status(500).json({ error: (err as Error).message });
+        const { status, body } = sanitizeError(err);
+        res.status(status).json(body);
       }
     });
 
@@ -529,7 +645,7 @@ export class Gateway {
     });
 
     // ─── Admin API ───
-    this.app.get("/api/admin/stats", (_, res) => {
+    this.app.get("/api/admin/stats", this.rbac.requireRole("admin"), (_, res) => {
       const tracer = AstraTracer.getInstance();
       res.json({
         agents: this.agentRouter.listAgents().length,
@@ -544,7 +660,7 @@ export class Gateway {
       });
     });
 
-    this.app.get("/api/admin/sessions", (_, res) => {
+    this.app.get("/api/admin/sessions", this.rbac.requireRole("admin"), (_, res) => {
       const sessions = Array.from(this.sessionLastUsed.entries()).map(([sid, lastUsed]) => ({
         sessionId: sid,
         lastUsed: new Date(lastUsed).toISOString(),
@@ -553,14 +669,14 @@ export class Gateway {
       res.json({ total: sessions.length, sessions });
     });
 
-    this.app.delete("/api/admin/sessions/:id", (req, res) => {
+    this.app.delete("/api/admin/sessions/:id", this.rbac.requireRole("admin"), (req, res) => {
       const { id } = req.params;
       this.agents.delete(id);
       this.sessionLastUsed.delete(id);
       res.json({ success: true });
     });
 
-    this.app.get("/api/admin/conversations", (_, res) => {
+    this.app.get("/api/admin/conversations", this.rbac.requireRole("admin"), (_, res) => {
       const conversations = Array.from(this.agents.entries()).map(([sid]) => {
         const lastUsed = this.sessionLastUsed.get(sid);
         return {
@@ -572,12 +688,45 @@ export class Gateway {
       res.json(conversations);
     });
 
+    // ─── Admin Settings API ───
+    this.app.get("/api/admin/settings", this.rbac.requireRole("admin"), (_, res) => {
+      res.json({
+        defaultModel: process.env.DEFAULT_MODEL || "gpt-4o",
+        maxAgents: parseInt(process.env.MAX_AGENTS || "50"),
+        sessionTtl: this.SESSION_TTL,
+        maxSessions: this.MAX_SESSIONS,
+        providers: this.providers.listProviders(),
+        features: {
+          sso: !!process.env.SAML_CERT,
+          billing: !!process.env.BILLING_ENABLED,
+          dataResidency: !!process.env.DATA_RESIDENCY_ENABLED,
+        },
+      });
+    });
+
+    this.app.put("/api/admin/settings", this.rbac.requireRole("admin"), (req, res) => {
+      const { defaultModel, maxAgents } = req.body;
+      if (defaultModel) process.env.DEFAULT_MODEL = defaultModel;
+      if (maxAgents) process.env.MAX_AGENTS = String(maxAgents);
+      res.json({ success: true, note: "Runtime settings updated. Restart required for persistence." });
+    });
+
+    // ─── Admin Security Scan ───
+    this.app.post("/api/admin/security/scan", this.rbac.requireRole("admin"), async (_, res) => {
+      try {
+        const report = this.gatewayShield.getSecurityReport();
+        res.json({ scannedAt: new Date().toISOString(), ...report });
+      } catch (err) {
+        res.status(500).json({ error: (err as Error).message });
+      }
+    });
+
     // ─── Health Check ───
     this.app.get("/health", (_, res) => {
       res.json({
         status: "operational",
         service: "AstraOS",
-        version: "3.5.0",
+        version: "4.0.0",
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         providers: this.providers.listProviders(),
@@ -606,11 +755,14 @@ export class Gateway {
       });
     });
 
+    // ─── Global Error Handler (MUST be last middleware) ───
+    this.app.use(globalErrorHandler);
+
     // ─── Start Server ───
     this.server.listen(this.port, () => {
       console.log(`
   ╔══════════════════════════════════════════════════════════════╗
-  ║            AstraOS v3.5 — AI Agent OS                       ║
+  ║            AstraOS v4.0 — AI Agent OS                       ║
   ║            Built in India for the World                     ║
   ╠══════════════════════════════════════════════════════════════╣
   ║  REST API     : http://localhost:${this.port}/api/chat                  ║
@@ -677,6 +829,26 @@ export class Gateway {
         }
       }
     }
+  }
+
+  /** Gracefully shut down — stop accepting new connections, drain in-flight requests. */
+  async shutdown(): Promise<void> {
+    logger.info("[Gateway] Shutting down — draining connections...");
+
+    // Close WebSocket servers
+    this.wss.close();
+
+    // Stop accepting new HTTP connections and wait for in-flight requests
+    await new Promise<void>((resolve) => {
+      this.server.close(() => resolve());
+      // Force-close after 10 seconds
+      setTimeout(() => {
+        logger.warn("[Gateway] Forced shutdown after timeout");
+        resolve();
+      }, 10_000);
+    });
+
+    logger.info("[Gateway] Shutdown complete");
   }
 
   private getActiveChannels(): string[] {

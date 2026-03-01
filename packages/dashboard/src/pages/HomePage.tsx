@@ -3,7 +3,7 @@ import {
   Bot, MessageSquare, Zap, Clock, Cpu, HardDrive, Users, Activity,
   ArrowUpRight, Server, Shield,
 } from "lucide-react";
-import { fetchStats, fetchHealth } from "../lib/api";
+import { fetchStats, fetchHealth, fetchMetrics } from "../lib/api";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar,
@@ -24,19 +24,18 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
 
-// Mock time-series for the chart (in production, pull from /api/metrics)
-const MOCK_CHART_DATA = Array.from({ length: 24 }, (_, i) => ({
+const EMPTY_CHART_DATA = Array.from({ length: 24 }, (_, i) => ({
   hour: `${i}:00`,
-  requests: Math.floor(Math.random() * 200 + 50),
-  tokens: Math.floor(Math.random() * 50000 + 10000),
+  requests: 0,
+  tokens: 0,
 }));
 
 export default function HomePage() {
   const { data: stats } = useQuery({ queryKey: ["stats"], queryFn: fetchStats });
-  const { data: health } = useQuery({
-    queryKey: ["health"],
-    queryFn: fetchHealth,
-  });
+  const { data: health } = useQuery({ queryKey: ["health"], queryFn: fetchHealth });
+  const { data: metrics } = useQuery({ queryKey: ["metrics"], queryFn: fetchMetrics });
+
+  const chartData = (metrics as { timeSeries?: Array<{ hour: string; requests: number; tokens: number }> })?.timeSeries ?? EMPTY_CHART_DATA;
 
   const statCards = [
     { label: "Active Agents", value: stats?.agents ?? "—", icon: Bot, color: "text-blue-400", bg: "bg-blue-500/10" },
@@ -89,7 +88,7 @@ export default function HomePage() {
             <Activity className="w-5 h-5 text-gray-500" />
           </div>
           <ResponsiveContainer width="100%" height={240}>
-            <AreaChart data={MOCK_CHART_DATA}>
+            <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorReq" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#5c7cfa" stopOpacity={0.3} />
@@ -115,7 +114,7 @@ export default function HomePage() {
             <Cpu className="w-5 h-5 text-gray-500" />
           </div>
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={MOCK_CHART_DATA}>
+            <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
               <XAxis dataKey="hour" stroke="#6b7280" fontSize={12} />
               <YAxis stroke="#6b7280" fontSize={12} />

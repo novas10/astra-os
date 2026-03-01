@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: AstraOS API
-  version: 3.5.0
+  version: 4.0.0
   description: |
     AstraOS — The AI Agent Operating System.
     Multi-LLM, MCP, A2A, GraphRAG, 14+ channels, 55+ skills, enterprise-grade security.

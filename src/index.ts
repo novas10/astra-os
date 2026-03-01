@@ -1,5 +1,5 @@
 /**
- * AstraOS v3.0 — Entry Point
+ * AstraOS v4.0 — Entry Point
  * The autonomous AI agent operating system.
  * Subsystems: MCP, A2A, Telemetry, GraphRAG, Workflows, SSO, Audit, Billing, Edge
  */
@@ -9,10 +9,13 @@ import { MCPRegistry } from "./mcp/MCPRegistry";
 import { AstraTracer } from "./telemetry/Tracer";
 import { logger } from "./utils/logger";
 
+let gateway: Gateway | null = null;
+let shuttingDown = false;
+
 async function main() {
   const PORT = parseInt(process.env.PORT ?? "3000", 10);
 
-  logger.info("[AstraOS] Starting AstraOS v3.0...");
+  logger.info("[AstraOS] Starting AstraOS v4.0...");
 
   // Initialize telemetry
   AstraTracer.getInstance();
@@ -31,10 +34,25 @@ async function main() {
   }
 
   // Start the main gateway (initializes all subsystems including enterprise modules)
-  const gateway = new Gateway(PORT);
+  gateway = new Gateway(PORT);
   await gateway.start();
 
-  logger.info("[AstraOS] All systems online — v3.0 ready.");
+  logger.info("[AstraOS] All systems online — v4.0 ready.");
+}
+
+async function gracefulShutdown(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  logger.info(`[AstraOS] Received ${signal} — shutting down gracefully...`);
+
+  try {
+    if (gateway) await gateway.shutdown();
+  } catch (err) {
+    logger.error(`[AstraOS] Error during shutdown: ${err instanceof Error ? err.message : err}`);
+  }
+
+  process.exit(0);
 }
 
 main().catch((err) => {
@@ -46,12 +64,5 @@ process.on("unhandledRejection", (reason) => {
   console.error("[AstraOS] Unhandled rejection:", reason);
 });
 
-process.on("SIGTERM", () => {
-  logger.info("[AstraOS] Shutting down gracefully...");
-  process.exit(0);
-});
-
-process.on("SIGINT", () => {
-  logger.info("[AstraOS] Interrupted, shutting down...");
-  process.exit(0);
-});
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));

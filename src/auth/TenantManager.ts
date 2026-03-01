@@ -6,6 +6,11 @@
 import * as crypto from "crypto";
 import { Router } from "express";
 import { logger } from "../utils/logger";
+import {
+  getDB, loadAllTenants, upsertTenant, deleteTenantRow,
+  loadTenantApiKeys, insertTenantApiKey, deleteTenantApiKey,
+  type TenantRow,
+} from "./PersistenceDB";
 
 export interface Tenant {
   id: string;
@@ -83,10 +88,67 @@ export class TenantManager {
   private apiKeyIndex: Map<string, string> = new Map(); // apiKey -> tenantId
 
   constructor() {
+    this.loadFromDB();
     this.seedDefaultTenant();
   }
 
+  /** Load persisted tenants from SQLite into in-memory cache. */
+  private loadFromDB(): void {
+    try {
+      const db = getDB();
+      const rows = loadAllTenants(db);
+      for (const row of rows) {
+        const tenant: Tenant = {
+          id: row.id,
+          name: row.name,
+          plan: row.plan as Tenant["plan"],
+          ownerId: row.owner_id,
+          apiKeys: [],
+          createdAt: row.created_at,
+          active: row.active === 1,
+          settings: JSON.parse(row.settings),
+          usage: JSON.parse(row.usage),
+        };
+        this.tenants.set(tenant.id, tenant);
+      }
+      // Load API keys
+      const keys = loadTenantApiKeys(db);
+      for (const k of keys) {
+        const tenant = this.tenants.get(k.tenant_id);
+        if (tenant) {
+          tenant.apiKeys.push(k.api_key);
+          this.apiKeyIndex.set(k.api_key, k.tenant_id);
+        }
+      }
+      if (rows.length > 0) logger.info(`[Tenant] Loaded ${rows.length} tenants from database`);
+    } catch {
+      logger.warn("[Tenant] Could not load from database, starting with empty state");
+    }
+  }
+
+  /** Persist a tenant to SQLite. */
+  private persistTenant(tenant: Tenant): void {
+    try {
+      const db = getDB();
+      upsertTenant(db, {
+        id: tenant.id,
+        name: tenant.name,
+        plan: tenant.plan,
+        owner_id: tenant.ownerId,
+        created_at: tenant.createdAt,
+        active: tenant.active ? 1 : 0,
+        settings: JSON.stringify(tenant.settings),
+        usage: JSON.stringify(tenant.usage),
+      });
+    } catch {
+      // Persistence failure is non-fatal
+    }
+  }
+
   private seedDefaultTenant(): void {
+    // Only seed if default doesn't already exist (from DB load)
+    if (this.tenants.has("default")) return;
+
     const defaultTenant: Tenant = {
       id: "default",
       name: "Default Organization",
@@ -100,6 +162,7 @@ export class TenantManager {
     };
 
     this.tenants.set(defaultTenant.id, defaultTenant);
+    this.persistTenant(defaultTenant);
   }
 
   private emptyUsage(): TenantUsage {
@@ -134,6 +197,8 @@ export class TenantManager {
 
     this.tenants.set(id, tenant);
     this.apiKeyIndex.set(apiKey, id);
+    this.persistTenant(tenant);
+    try { insertTenantApiKey(getDB(), apiKey, id); } catch { /* non-fatal */ }
 
     logger.info(`[Tenant] Created: ${tenant.name} (${tenant.plan})`);
     return tenant;
@@ -157,6 +222,7 @@ export class TenantManager {
     }
 
     Object.assign(tenant, updates);
+    this.persistTenant(tenant);
     return tenant;
   }
 
@@ -167,8 +233,10 @@ export class TenantManager {
 
     for (const key of tenant.apiKeys) {
       this.apiKeyIndex.delete(key);
+      try { deleteTenantApiKey(getDB(), key); } catch { /* non-fatal */ }
     }
     this.tenants.delete(id);
+    try { deleteTenantRow(getDB(), id); } catch { /* non-fatal */ }
     return true;
   }
 
@@ -185,6 +253,7 @@ export class TenantManager {
     const key = `tak_${crypto.randomBytes(24).toString("hex")}`;
     tenant.apiKeys.push(key);
     this.apiKeyIndex.set(key, tenantId);
+    try { insertTenantApiKey(getDB(), key, tenantId); } catch { /* non-fatal */ }
     return key;
   }
 
@@ -197,6 +266,7 @@ export class TenantManager {
 
     tenant.apiKeys.splice(idx, 1);
     this.apiKeyIndex.delete(apiKey);
+    try { deleteTenantApiKey(getDB(), apiKey); } catch { /* non-fatal */ }
     return true;
   }
 

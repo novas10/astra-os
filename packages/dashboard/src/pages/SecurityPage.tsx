@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Shield, ShieldCheck, ShieldAlert, ShieldX, Ban, Clock,
-  AlertTriangle, CheckCircle, XCircle, Eye, RefreshCw,
+  AlertTriangle, CheckCircle, XCircle, Eye, RefreshCw, Info,
 } from "lucide-react";
-import { fetchSecurityOverview } from "../lib/api";
+import { fetchSecurityOverview, runSecurityScan } from "../lib/api";
 
 const MOCK_PROTECTIONS = [
   { name: "CSRF Protection", description: "Cross-site request forgery tokens on all state-changing endpoints", status: "active" as const },
@@ -57,11 +57,18 @@ function getStatusIcon(status: string) {
 }
 
 export default function SecurityPage() {
+  const queryClient = useQueryClient();
   const { data: overview, isLoading } = useQuery({
     queryKey: ["security-overview"],
     queryFn: fetchSecurityOverview,
   });
 
+  const scanMutation = useMutation({
+    mutationFn: runSecurityScan,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["security-overview"] }),
+  });
+
+  const usingMockData = !overview;
   const grade = overview?.grade ?? "A+";
   const score = overview?.score ?? 97;
   const protections = overview?.protections ?? MOCK_PROTECTIONS;
@@ -79,9 +86,25 @@ export default function SecurityPage() {
           <h1 className="text-2xl font-bold text-white">Security</h1>
           <p className="text-gray-500 mt-1">Security posture, protections, and event monitoring</p>
         </div>
-        <button className="btn-secondary flex items-center gap-2">
-          <RefreshCw className="w-4 h-4" /> Run Scan
-        </button>
+        <div className="flex items-center gap-3">
+          {usingMockData && (
+            <span className="badge-yellow flex items-center gap-1">
+              <Info className="w-3 h-3" /> Demo Data
+            </span>
+          )}
+          <button
+            onClick={() => scanMutation.mutate()}
+            disabled={scanMutation.isPending}
+            className="btn-secondary flex items-center gap-2"
+          >
+            {scanMutation.isPending ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4" />
+            )}
+            {scanMutation.isPending ? "Scanning..." : "Run Scan"}
+          </button>
+        </div>
       </div>
 
       {/* Top Row: Grade + Exposure Check */}

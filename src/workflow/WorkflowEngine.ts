@@ -55,15 +55,27 @@ export class WorkflowEngine {
   private executors: Map<NodeType, NodeExecutor> = new Map();
   private pendingInputs: Map<string, { resolve: (value: unknown) => void }> = new Map();
 
+  private static readonly BLOCKED_PATTERNS = /\b(process|require|import|eval|Function|constructor|__proto__|globalThis|fetch|child_process|exec|spawn|setTimeout|setInterval|setImmediate)\b/;
+
   constructor() {
     this.registerDefaultExecutors();
+  }
+
+  private safeEval(expression: string, variables: Record<string, unknown>): unknown {
+    if (WorkflowEngine.BLOCKED_PATTERNS.test(expression)) {
+      throw new Error(`Blocked expression: contains forbidden keyword`);
+    }
+    const keys = Object.keys(variables);
+    const values = Object.values(variables);
+    const fn = new Function(...keys, `"use strict"; return (${expression});`);
+    return fn(...values);
   }
 
   private registerDefaultExecutors(): void {
     // Transform node: applies a JS expression to transform variables
     this.executors.set("transform", async (node, variables) => {
       const expression = node.config.expression as string;
-      const result = new Function("vars", `with(vars) { return ${expression}; }`)(variables);
+      const result = this.safeEval(expression, variables);
       const outputVar = (node.config.outputVar as string) || "result";
       return {
         result,
@@ -75,7 +87,7 @@ export class WorkflowEngine {
     // Condition node: evaluates condition and branches
     this.executors.set("condition", async (node, variables) => {
       const condition = node.config.condition as string;
-      const result = new Function("vars", `with(vars) { return !!(${condition}); }`)(variables);
+      const result = this.safeEval(condition, variables);
       return {
         result,
         nextNode: result ? node.conditionTrue : node.conditionFalse,
@@ -149,9 +161,44 @@ export class WorkflowEngine {
         continue;
       }
 
-      // Handle loop nodes
+      // Handle loop nodes — iterate over an array variable
       if (node.type === "loop") {
-        await this.executeLoop(run, workflow);
+        const loopVar = node.config.loopVar as string || "items";
+        const items = run.variables[loopVar];
+        const bodyNode = typeof node.next === "string" ? node.next : node.next?.[0];
+        const afterLoop = node.config.afterLoop as string || node.conditionFalse;
+
+        if (!Array.isArray(items) || !bodyNode) {
+          if (afterLoop) { run.currentNode = afterLoop; }
+          else { run.status = "completed"; run.completedAt = Date.now(); }
+          continue;
+        }
+
+        const iterResults: unknown[] = [];
+        for (let i = 0; i < items.length && run.status === "running"; i++) {
+          run.variables = { ...run.variables, loopIndex: i, loopItem: items[i], loopTotal: items.length };
+          const bodyDef = workflow.nodes.find((n) => n.id === bodyNode);
+          if (!bodyDef) break;
+          const bodyExecutor = this.executors.get(bodyDef.type);
+          if (!bodyExecutor) break;
+
+          try {
+            const result = await bodyExecutor(bodyDef, run.variables);
+            iterResults.push(result.result);
+            if (result.variables) run.variables = { ...run.variables, ...result.variables };
+            run.history.push({ nodeId: bodyDef.id, result: result.result, timestamp: Date.now() });
+          } catch (err) {
+            run.status = "failed";
+            run.error = `Loop iteration ${i} failed: ${(err as Error).message}`;
+            break;
+          }
+        }
+
+        run.variables = { ...run.variables, loopResults: iterResults };
+        if (run.status === "running") {
+          if (afterLoop) { run.currentNode = afterLoop; }
+          else { run.status = "completed"; run.completedAt = Date.now(); }
+        }
         continue;
       }
 
@@ -251,5 +298,13 @@ export class WorkflowEngine {
 
   listWorkflows(): WorkflowDefinition[] {
     return Array.from(this.workflows.values());
+  }
+
+  getWorkflow(id: string): WorkflowDefinition | undefined {
+    return this.workflows.get(id);
+  }
+
+  deleteWorkflow(id: string): boolean {
+    return this.workflows.delete(id);
   }
 }

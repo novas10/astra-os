@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { Package, Search, Star, Download, Check, ExternalLink } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Package, Search, Star, Download, Check, ExternalLink, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { fetchSkills, searchMarketplace, fetchMarketplaceCategories, fetchInstalledMarketplace, installSkill } from "../lib/api";
 
@@ -13,11 +13,30 @@ const FEATURED_SKILLS = [
 ];
 
 export default function MarketplacePage() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [installingId, setInstallingId] = useState<string | null>(null);
 
   const { data: installedSkills } = useQuery({ queryKey: ["skills"], queryFn: fetchSkills });
   const { data: installed } = useQuery({ queryKey: ["marketplace-installed"], queryFn: fetchInstalledMarketplace });
+  const { data: searchResults } = useQuery({
+    queryKey: ["marketplace-search", search],
+    queryFn: () => searchMarketplace(search || "featured"),
+    enabled: true,
+  });
+
+  const installMutation = useMutation({
+    mutationFn: installSkill,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["skills"] });
+      queryClient.invalidateQueries({ queryKey: ["marketplace-installed"] });
+      setInstallingId(null);
+    },
+    onError: () => setInstallingId(null),
+  });
+
+  const marketplaceSkills = searchResults?.skills ?? FEATURED_SKILLS;
 
   const categories = [
     { id: null, name: "All", icon: "grid" },
@@ -29,7 +48,7 @@ export default function MarketplacePage() {
     { id: "automation", name: "Automation", icon: "repeat" },
   ];
 
-  const filteredSkills = FEATURED_SKILLS.filter((skill) => {
+  const filteredSkills = marketplaceSkills.filter((skill: typeof FEATURED_SKILLS[0]) => {
     const matchesSearch = !search || skill.name.toLowerCase().includes(search.toLowerCase()) || skill.description.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = !activeCategory || skill.category === activeCategory;
     return matchesSearch && matchesCategory;
@@ -93,7 +112,7 @@ export default function MarketplacePage() {
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-white">{skill.name}</h3>
                       {skill.verified && (
-                        <Check className="w-4 h-4 text-blue-400" title="Verified" />
+                        <span title="Verified"><Check className="w-4 h-4 text-blue-400" /></span>
                       )}
                     </div>
                     <p className="text-xs text-gray-500">by {skill.author}</p>
@@ -124,10 +143,18 @@ export default function MarketplacePage() {
                   <span className="badge-green">Installed</span>
                 ) : (
                   <button
-                    onClick={() => installSkill(skill.id)}
+                    onClick={() => {
+                      setInstallingId(skill.id);
+                      installMutation.mutate(skill.id);
+                    }}
+                    disabled={installingId === skill.id}
                     className="btn-primary text-xs py-1 px-3"
                   >
-                    Install
+                    {installingId === skill.id ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      "Install"
+                    )}
                   </button>
                 )}
               </div>

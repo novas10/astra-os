@@ -6,6 +6,7 @@
 import { Request, Response, NextFunction, Router } from "express";
 import * as crypto from "crypto";
 import { logger } from "../utils/logger";
+import { getDB, loadAllUsers, upsertUser, deleteUserRow, type UserRow } from "./PersistenceDB";
 
 // ─── Roles & Permissions ───
 
@@ -88,12 +89,62 @@ export class RBACManager {
       logger.warn("[RBAC] No JWT_SECRET set — using random secret (tokens won't survive restarts)");
     }
 
+    this.loadFromDB();
     this.seedDefaultAdmin();
+  }
+
+  /** Load persisted users from SQLite into in-memory cache. */
+  private loadFromDB(): void {
+    try {
+      const db = getDB();
+      const rows = loadAllUsers(db);
+      for (const row of rows) {
+        const user: AstraUser = {
+          id: row.id,
+          email: row.email,
+          name: row.name,
+          role: row.role as Role,
+          tenantId: row.tenant_id,
+          apiKey: row.api_key || undefined,
+          createdAt: row.created_at,
+          lastLogin: row.last_login || undefined,
+          active: row.active === 1,
+        };
+        this.users.set(user.id, user);
+        if (user.apiKey) this.apiKeyIndex.set(user.apiKey, user.id);
+      }
+      if (rows.length > 0) logger.info(`[RBAC] Loaded ${rows.length} users from database`);
+    } catch {
+      logger.warn("[RBAC] Could not load from database, starting with empty state");
+    }
+  }
+
+  /** Persist a user to SQLite. */
+  private persistUser(user: AstraUser): void {
+    try {
+      const db = getDB();
+      upsertUser(db, {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        tenant_id: user.tenantId,
+        api_key: user.apiKey || null,
+        created_at: user.createdAt,
+        last_login: user.lastLogin || null,
+        active: user.active ? 1 : 0,
+      });
+    } catch {
+      // Persistence failure is non-fatal — data still in memory
+    }
   }
 
   private seedDefaultAdmin(): void {
     const adminEmail = process.env.ADMIN_EMAIL || "admin@astra-os.dev";
     const adminKey = process.env.ADMIN_API_KEY;
+
+    // Only seed if admin doesn't already exist (from DB load)
+    if (this.users.has("usr_admin")) return;
 
     const admin: AstraUser = {
       id: "usr_admin",
@@ -108,6 +159,7 @@ export class RBACManager {
 
     this.users.set(admin.id, admin);
     if (adminKey) this.apiKeyIndex.set(adminKey, admin.id);
+    this.persistUser(admin);
   }
 
   // ─── User Management ───
@@ -129,6 +181,7 @@ export class RBACManager {
 
     this.users.set(id, user);
     this.apiKeyIndex.set(apiKey, id);
+    this.persistUser(user);
     logger.info(`[RBAC] User created: ${user.email} (${user.role})`);
     return user;
   }
@@ -150,6 +203,7 @@ export class RBACManager {
     const user = this.users.get(id);
     if (!user) return undefined;
     Object.assign(user, updates);
+    this.persistUser(user);
     return user;
   }
 
@@ -158,6 +212,7 @@ export class RBACManager {
     if (!user) return false;
     if (user.apiKey) this.apiKeyIndex.delete(user.apiKey);
     this.users.delete(id);
+    try { deleteUserRow(getDB(), id); } catch { /* non-fatal */ }
     return true;
   }
 
@@ -174,6 +229,7 @@ export class RBACManager {
     const newKey = `ask_${crypto.randomBytes(24).toString("hex")}`;
     user.apiKey = newKey;
     this.apiKeyIndex.set(newKey, userId);
+    this.persistUser(user);
     return newKey;
   }
 
@@ -242,7 +298,7 @@ export class RBACManager {
    * Middleware that resolves user from JWT or API key and attaches to req.
    */
   authenticate() {
-    return (req: Request, _res: Response, next: NextFunction): void => {
+    return (req: Request, res: Response, next: NextFunction): void => {
       // Try Bearer token
       const authHeader = req.headers.authorization;
       if (authHeader?.startsWith("Bearer ")) {
@@ -259,7 +315,7 @@ export class RBACManager {
       }
 
       // Try API key
-      const apiKey = (req.headers["x-api-key"] as string) || (req.query.api_key as string);
+      const apiKey = req.headers["x-api-key"] as string;
       if (apiKey) {
         const user = this.getUserByApiKey(apiKey);
         if (user && user.active) {
@@ -269,9 +325,15 @@ export class RBACManager {
         }
       }
 
-      // No auth — set anonymous viewer for public endpoints
-      (req as any).user = null;
-      next();
+      // Allow anonymous access only for explicitly public paths
+      const publicPaths = ["/health", "/webhook/", "/.well-known/", "/docs", "/api/auth/login", "/api/sso/", "/api/chat"];
+      const isPublic = publicPaths.some((p) => req.path === p || req.path.startsWith(p));
+      if (isPublic) {
+        (req as any).user = null;
+        return next();
+      }
+
+      res.status(401).json({ error: "Authentication required" });
     };
   }
 

@@ -9,6 +9,10 @@ export default defineConfig({
       "/api": "http://localhost:3000",
       "/health": "http://localhost:3000",
       "/.well-known": "http://localhost:3000",
+      "/ws/vajra": {
+        target: "ws://localhost:3000",
+        ws: true,
+      },
     },
   },
   build: {

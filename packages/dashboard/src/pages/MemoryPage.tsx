@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Brain, Search, Database, Network, FileText, Send } from "lucide-react";
-import { sendMessage } from "../lib/api";
+import { searchMemory } from "../lib/api";
 
 interface MemoryEntry {
   type: string;
@@ -11,7 +11,6 @@ interface MemoryEntry {
 }
 
 export default function MemoryPage() {
-  const [userId, setUserId] = useState("demo");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchMode, setSearchMode] = useState<"hybrid" | "semantic" | "keyword">("hybrid");
   const [results, setResults] = useState<MemoryEntry[]>([]);
@@ -21,20 +20,22 @@ export default function MemoryPage() {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     try {
-      const res = await sendMessage(
-        `Search my memory for: "${searchQuery}" using ${searchMode} search mode. Return the results in a structured format.`,
-        userId,
-      );
-      // Parse results from agent response
-      setResults([
-        {
-          type: "search_result",
-          content: res.response,
-          timestamp: new Date().toISOString(),
-          source: searchMode,
-          score: 1.0,
-        },
-      ]);
+      const res = await searchMemory(searchQuery, searchMode);
+      const entries = res.results
+        ? res.results.split("\n\n").filter(Boolean).map((content, i) => ({
+            type: "search_result",
+            content,
+            timestamp: new Date().toISOString(),
+            source: res.mode,
+            score: 1 - i * 0.05,
+          }))
+        : [];
+      setResults(entries.length > 0 ? entries : [{
+        type: "search_result",
+        content: "No results found for this query.",
+        timestamp: new Date().toISOString(),
+        source: searchMode,
+      }]);
     } catch (err) {
       console.error("Search failed:", err);
     } finally {
@@ -76,16 +77,6 @@ export default function MemoryPage() {
         <h3 className="text-lg font-semibold text-white mb-4">Memory Search</h3>
 
         <div className="flex gap-4 mb-4">
-          <div className="flex-1">
-            <label className="text-xs text-gray-400 block mb-1">User ID</label>
-            <input
-              type="text"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              className="input w-full"
-              placeholder="User ID"
-            />
-          </div>
           <div className="w-48">
             <label className="text-xs text-gray-400 block mb-1">Search Mode</label>
             <select
@@ -154,17 +145,27 @@ export default function MemoryPage() {
         </div>
       )}
 
-      {/* Knowledge Graph Visualization Placeholder */}
+      {/* Knowledge Graph Info */}
       <div className="card">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
           <Network className="w-5 h-5 text-yellow-400" /> Knowledge Graph
         </h3>
-        <div className="h-64 bg-gray-800 rounded-lg flex items-center justify-center border border-gray-700">
-          <div className="text-center">
-            <Network className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400 font-medium">Knowledge Graph Visualization</p>
-            <p className="text-sm text-gray-500 mt-1">Entity-relationship graph rendered here</p>
-            <p className="text-xs text-gray-600 mt-2">Entities, relationships, and communities from GraphRAG</p>
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Network className="w-6 h-6 text-yellow-400" />
+            </div>
+            <div>
+              <p className="text-gray-300 font-medium mb-1">GraphRAG Knowledge Graph</p>
+              <p className="text-sm text-gray-400 mb-3">
+                The knowledge graph automatically builds entity-relationship connections from stored memories
+                using Louvain community detection. Entities, relationships, and communities are
+                discovered as you add data to the memory system.
+              </p>
+              <p className="text-xs text-gray-500">
+                Search above using "Hybrid" mode to include graph results in your queries.
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -162,19 +162,28 @@ export class AuditLog {
   }
 
   async deleteUserData(userId: string): Promise<number> {
-    const before = this.entries.length;
-    this.entries = this.entries.filter((e) => e.actor.userId !== userId);
-    const deleted = before - this.entries.length;
+    // Redact entries instead of deleting — preserves hash chain integrity
+    let redacted = 0;
+    for (const entry of this.entries) {
+      if (entry.actor.userId === userId) {
+        entry.actor = { userId: "[REDACTED]", role: entry.actor.role };
+        entry.details = { redacted: true, reason: "GDPR right to erasure" };
+        if (entry.resource) {
+          entry.resource = { type: entry.resource.type, id: "[REDACTED]" };
+        }
+        redacted++;
+      }
+    }
 
-    // Log the deletion itself
+    // Log the redaction itself
     await this.log(
       "data.delete",
       { userId: "system", role: "system" },
-      { type: "user_data", id: userId },
-      { deletedEntries: deleted, reason: "GDPR right to erasure" },
+      { type: "user_data", id: "[REDACTED]" },
+      { redactedEntries: redacted, reason: "GDPR right to erasure" },
     );
 
-    return deleted;
+    return redacted;
   }
 
   // ─── Statistics ───

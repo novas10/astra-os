@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 import ReactFlow, {
   addEdge, Background, Controls, MiniMap,
   useNodesState, useEdgesState,
@@ -8,8 +9,9 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import {
   Play, Plus, Save, Trash2, Bot, Wrench, GitBranch,
-  Layers, RotateCw, UserCheck, ArrowRightLeft,
+  Layers, RotateCw, UserCheck, ArrowRightLeft, CheckCircle, AlertCircle,
 } from "lucide-react";
+import { saveWorkflow, runWorkflow } from "../lib/api";
 
 // Custom node types
 const NODE_TYPES_CONFIG = [
@@ -65,6 +67,58 @@ export default function WorkflowBuilderPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [runResult, setRunResult] = useState<{ status: string; history: unknown[] } | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
+
+  const buildWorkflowDefinition = () => {
+    const id = savedId || `wf_${Date.now()}`;
+    const entryNode = nodes.length > 0 ? nodes[0].id : "";
+    const edgeMap = new Map<string, string[]>();
+    for (const e of edges) {
+      const existing = edgeMap.get(e.source) || [];
+      existing.push(e.target);
+      edgeMap.set(e.source, existing);
+    }
+    return {
+      id,
+      name: "Dashboard Workflow",
+      description: "Built with the visual workflow editor",
+      version: "1.0.0",
+      entryNode,
+      variables: {},
+      nodes: nodes.map((n) => {
+        const nexts = edgeMap.get(n.id) || [];
+        return {
+          id: n.id,
+          type: n.data.type,
+          name: n.data.label,
+          config: n.data.config || {},
+          next: nexts.length === 1 ? nexts[0] : nexts.length > 1 ? nexts : undefined,
+        };
+      }),
+    };
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: () => {
+      const def = buildWorkflowDefinition();
+      return saveWorkflow(def);
+    },
+    onSuccess: (data) => setSavedId(data.id),
+  });
+
+  const runMutation = useMutation({
+    mutationFn: async () => {
+      if (!savedId) {
+        const def = buildWorkflowDefinition();
+        const saved = await saveWorkflow(def);
+        setSavedId(saved.id);
+        return runWorkflow(saved.id);
+      }
+      return runWorkflow(savedId);
+    },
+    onSuccess: (data) => setRunResult({ status: data.status, history: data.history }),
+  });
 
   const onConnect = useCallback(
     (params: Connection) =>
@@ -87,16 +141,42 @@ export default function WorkflowBuilderPage() {
     <div className="h-full flex flex-col">
       {/* Toolbar */}
       <div className="p-4 border-b border-gray-800 flex items-center justify-between bg-gray-900">
-        <div>
-          <h1 className="text-xl font-bold text-white">Workflow Builder</h1>
-          <p className="text-xs text-gray-500">Visual DAG editor — drag nodes to build workflows</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-white">Workflow Builder</h1>
+            <p className="text-xs text-gray-500">Visual DAG editor — drag nodes to build workflows</p>
+          </div>
+          {saveMutation.isSuccess && (
+            <span className="badge-green flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Saved</span>
+          )}
+          {(saveMutation.isError || runMutation.isError) && (
+            <span className="badge-red flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Error</span>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn-secondary flex items-center gap-2 text-sm">
-            <Save className="w-4 h-4" /> Save
+          <button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+            className="btn-secondary flex items-center gap-2 text-sm"
+          >
+            {saveMutation.isPending ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            Save
           </button>
-          <button className="btn-primary flex items-center gap-2 text-sm">
-            <Play className="w-4 h-4" /> Run
+          <button
+            onClick={() => runMutation.mutate()}
+            disabled={runMutation.isPending}
+            className="btn-primary flex items-center gap-2 text-sm"
+          >
+            {runMutation.isPending ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Play className="w-4 h-4" />
+            )}
+            Run
           </button>
         </div>
       </div>
@@ -206,6 +286,25 @@ export default function WorkflowBuilderPage() {
           </div>
         )}
       </div>
+
+      {/* Run Results */}
+      {runResult && (
+        <div className="p-4 border-t border-gray-800 bg-gray-900 max-h-48 overflow-y-auto">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-white">Run Result</h3>
+            <span className={runResult.status === "completed" ? "badge-green" : runResult.status === "failed" ? "badge-red" : "badge-yellow"}>
+              {runResult.status}
+            </span>
+          </div>
+          <div className="space-y-1">
+            {(runResult.history as Array<{ nodeId: string; result: unknown; timestamp: number }>).map((h, i) => (
+              <div key={i} className="text-xs font-mono text-gray-400 bg-gray-800 rounded px-2 py-1">
+                <span className="text-astra-400">{h.nodeId}</span>: {JSON.stringify(h.result).slice(0, 100)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

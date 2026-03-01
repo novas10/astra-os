@@ -1,6 +1,6 @@
 {
   "name": "@astra-os/dashboard",
-  "version": "3.5.0",
+  "version": "4.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,7 +15,8 @@
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.0",
     "reactflow": "^11.11.4",
-    "recharts": "^2.15.0"
+    "recharts": "^2.15.0",
+    "lightweight-charts": "^4.2.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

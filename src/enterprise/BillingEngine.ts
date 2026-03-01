@@ -251,10 +251,14 @@ export class BillingEngine {
     });
   }
 
-  getUsageSummary(tenantId: string, metric?: string): { metric: string; total: number }[] {
-    const records = this.usageRecords.filter(
-      (r) => r.tenantId === tenantId && (!metric || r.metric === metric),
-    );
+  getUsageSummary(tenantId: string, metric?: string, startDate?: string, endDate?: string): { metric: string; total: number }[] {
+    const records = this.usageRecords.filter((r) => {
+      if (r.tenantId !== tenantId) return false;
+      if (metric && r.metric !== metric) return false;
+      if (startDate && r.timestamp < startDate) return false;
+      if (endDate && r.timestamp > endDate) return false;
+      return true;
+    });
 
     const summary = new Map<string, number>();
     for (const r of records) {
@@ -415,7 +419,9 @@ export class BillingEngine {
     // Usage summary
     this.router.get("/usage/:tenantId", (req: Request, res: Response) => {
       const metric = req.query.metric as string | undefined;
-      res.json(this.getUsageSummary(req.params.tenantId, metric));
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
+      res.json(this.getUsageSummary(req.params.tenantId, metric, startDate, endDate));
     });
 
     // Invoices

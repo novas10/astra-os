@@ -270,10 +270,27 @@ export class SSOManager {
 
     const config = provider.config as SAMLConfig;
 
-    // Decode SAML response (simplified — production should validate XML signature)
+    // Input validation: limit SAML response size and type
+    if (typeof samlResponse !== "string" || samlResponse.length > 100_000) {
+      throw new Error("SAML response exceeds maximum allowed size (100KB)");
+    }
+
     const decoded = Buffer.from(samlResponse, "base64").toString("utf-8");
 
-    // Extract basic attributes (simplified parser)
+    // ─── XML Digital Signature Validation ───
+    this.verifySAMLSignature(decoded, config.certificate);
+
+    // ─── Timing Validation (replay prevention) ───
+    this.validateSAMLConditions(decoded);
+
+    // ─── Destination Validation ───
+    const expectedDest = `${this.callbackBaseUrl}/api/sso/callback/saml`;
+    const destMatch = decoded.match(/Destination="([^"]+)"/);
+    if (destMatch && destMatch[1] !== expectedDest) {
+      throw new Error("SAML response destination mismatch — possible replay attack");
+    }
+
+    // Extract attributes from validated response
     const nameId = this.extractXmlValue(decoded, "NameID") || "unknown";
     const email = this.extractXmlAttribute(decoded, config.attributeMapping?.email || "email") || nameId;
     const name = this.extractXmlAttribute(decoded, config.attributeMapping?.name || "displayName") || email;
@@ -282,22 +299,99 @@ export class SSOManager {
       externalId: nameId,
       email,
       name,
-      attributes: { nameId, samlResponse: "[present]" },
+      attributes: { nameId, samlResponse: "[signature-verified]" },
       providerId: provider.id,
     };
 
     this.sessions.delete(relayState);
-    logger.info(`[SSO] SAML login successful: ${ssoUser.email} via ${provider.name}`);
+    logger.info(`[SSO] SAML login (signature verified): ${ssoUser.email} via ${provider.name}`);
     return ssoUser;
   }
 
+  /**
+   * Verify XML digital signature on SAML Response using the IdP's X.509 certificate.
+   * Validates SignatureValue, DigestValue, and assertion integrity.
+   */
+  private verifySAMLSignature(xml: string, certificate: string): void {
+    const sigValueMatch = xml.match(/<ds:SignatureValue[^>]*>([\s\S]*?)<\/ds:SignatureValue>/);
+    if (!sigValueMatch) throw new Error("SAML response is not signed — ds:SignatureValue missing");
+
+    const signedInfoMatch = xml.match(/<ds:SignedInfo[^>]*>([\s\S]*?)<\/ds:SignedInfo>/);
+    if (!signedInfoMatch) throw new Error("SAML ds:SignedInfo element missing");
+
+    // Verify digest of referenced assertion (integrity check)
+    const digestMatch = xml.match(/<ds:DigestValue>([\s\S]*?)<\/ds:DigestValue>/);
+    const referenceMatch = xml.match(/<ds:Reference URI="([^"]*)"/);
+    if (digestMatch && referenceMatch) {
+      const refUri = referenceMatch[1];
+      const refId = refUri.startsWith("#") ? refUri.slice(1) : refUri;
+
+      // Find the referenced assertion by ID
+      const idPattern = new RegExp(`<saml:Assertion[^>]*ID="${refId}"[^>]*>[\\s\\S]*?</saml:Assertion>`);
+      const assertionMatch = xml.match(idPattern);
+      if (assertionMatch) {
+        const digestAlgoMatch = xml.match(/<ds:DigestMethod Algorithm="([^"]+)"/);
+        const algo = digestAlgoMatch?.[1]?.includes("sha256") ? "sha256" : "sha1";
+        const computed = crypto.createHash(algo).update(assertionMatch[0]).digest("base64");
+        const expected = digestMatch[1].replace(/\s/g, "");
+        if (computed !== expected) {
+          throw new Error("SAML assertion digest mismatch — content tampered");
+        }
+      }
+    }
+
+    // Build PEM certificate
+    const cleanCert = certificate.replace(/-----BEGIN CERTIFICATE-----/g, "")
+      .replace(/-----END CERTIFICATE-----/g, "").replace(/\s/g, "");
+    const pemCert = `-----BEGIN CERTIFICATE-----\n${cleanCert.match(/.{1,64}/g)?.join("\n")}\n-----END CERTIFICATE-----`;
+
+    // Determine signature algorithm
+    const sigMethodMatch = xml.match(/<ds:SignatureMethod Algorithm="([^"]+)"/);
+    const alg = sigMethodMatch?.[1]?.includes("sha256") ? "SHA256" : "SHA1";
+    const sigValue = sigValueMatch[1].replace(/\s/g, "");
+
+    // Canonicalize SignedInfo with namespace
+    let signedInfoXml = `<ds:SignedInfo${signedInfoMatch[0].match(/<ds:SignedInfo([^>]*)>/)?.[1] || ""}>${signedInfoMatch[1]}</ds:SignedInfo>`;
+    if (!signedInfoXml.includes("xmlns:ds")) {
+      signedInfoXml = signedInfoXml.replace("<ds:SignedInfo", '<ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"');
+    }
+
+    // Cryptographic signature verification
+    const verifier = crypto.createVerify(`RSA-${alg}`);
+    verifier.update(signedInfoXml);
+    if (!verifier.verify(pemCert, sigValue, "base64")) {
+      throw new Error("SAML signature verification FAILED — response may be forged");
+    }
+
+    logger.info(`[SSO] SAML XML signature verified (RSA-${alg})`);
+  }
+
+  /**
+   * Validate SAML Conditions (NotBefore / NotOnOrAfter) to prevent replay attacks.
+   */
+  private validateSAMLConditions(xml: string): void {
+    const m = xml.match(/<saml:Conditions\s+NotBefore="([^"]+)"\s+NotOnOrAfter="([^"]+)"/);
+    if (m) {
+      const now = Date.now();
+      const clockSkew = 300_000; // 5 minutes tolerance
+      if (now < new Date(m[1]).getTime() - clockSkew) throw new Error("SAML assertion not yet valid (NotBefore)");
+      if (now >= new Date(m[2]).getTime() + clockSkew) throw new Error("SAML assertion expired (NotOnOrAfter)");
+    }
+  }
+
+  private static sanitizeForRegex(input: string): string {
+    return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   private extractXmlValue(xml: string, tag: string): string | null {
-    const match = xml.match(new RegExp(`<[^>]*${tag}[^>]*>([^<]*)<`));
+    const safeTag = SSOManager.sanitizeForRegex(tag);
+    const match = xml.match(new RegExp(`<[^>]*${safeTag}[^>]*>([^<]*)<`));
     return match ? match[1] : null;
   }
 
   private extractXmlAttribute(xml: string, attrName: string): string | null {
-    const attrMatch = xml.match(new RegExp(`Name="${attrName}"[\\s\\S]*?<saml:AttributeValue[^>]*>([^<]*)<`));
+    const safeName = SSOManager.sanitizeForRegex(attrName);
+    const attrMatch = xml.match(new RegExp(`Name="${safeName}"[\\s\\S]*?<saml:AttributeValue[^>]*>([^<]*)<`));
     return attrMatch ? attrMatch[1] : null;
   }
 

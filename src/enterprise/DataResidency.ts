@@ -1,6 +1,7 @@
 /**
  * AstraOS — Data Residency
- * Region-specific data storage, encryption at rest, data isolation, and compliance controls.
+ * Region-specific data storage with real file-based routing, encryption at rest
+ * (AES-256-GCM), data isolation, compliance controls, and data lifecycle management.
  */
 
 import * as crypto from "crypto";
@@ -17,7 +18,7 @@ export interface DataRegion {
   location: string;
   storageEndpoint: string;
   available: boolean;
-  compliance: string[];       // e.g., ["GDPR", "SOC2", "HIPAA"]
+  compliance: string[];
 }
 
 export interface EncryptionKey {
@@ -31,9 +32,9 @@ export interface EncryptionKey {
 }
 
 export interface EncryptedData {
-  ciphertext: string;          // base64
-  iv: string;                  // base64
-  authTag: string;             // base64 (GCM only)
+  ciphertext: string;
+  iv: string;
+  authTag: string;
   keyId: string;
   algorithm: string;
 }
@@ -46,6 +47,17 @@ export interface TenantDataConfig {
   dataRetentionDays: number;
   allowedExportRegions: string[];
   piiMaskingEnabled: boolean;
+}
+
+interface StoredObject {
+  id: string;
+  tenantId: string;
+  regionId: string;
+  key: string;
+  encrypted: boolean;
+  size: number;
+  createdAt: string;
+  expiresAt?: string;
 }
 
 // ─── Available Regions ───
@@ -65,17 +77,19 @@ const REGIONS: DataRegion[] = [
 export class DataResidencyManager {
   private keys: Map<string, EncryptionKey> = new Map();
   private tenantConfigs: Map<string, TenantDataConfig> = new Map();
+  private objectIndex: Map<string, StoredObject> = new Map();
   private masterKey: Buffer;
   private keysDir: string;
+  private dataRoot: string;
 
   constructor() {
-    // Master key from environment (in production, use KMS)
     const masterKeyHex = process.env.MASTER_ENCRYPTION_KEY;
     this.masterKey = masterKeyHex
       ? Buffer.from(masterKeyHex, "hex")
       : crypto.randomBytes(32);
 
     this.keysDir = path.join(process.cwd(), ".keys");
+    this.dataRoot = process.env.DATA_ROOT || path.join(process.cwd(), ".astra-data");
 
     if (!masterKeyHex) {
       logger.warn("[DataResidency] No MASTER_ENCRYPTION_KEY set — using random key (data won't survive restarts)");
@@ -84,7 +98,14 @@ export class DataResidencyManager {
 
   async initialize(): Promise<void> {
     await fs.mkdir(this.keysDir, { recursive: true });
-    logger.info(`[DataResidency] Initialized — ${REGIONS.filter((r) => r.available).length} regions available`);
+    await fs.mkdir(this.dataRoot, { recursive: true });
+
+    // Create region-specific storage directories
+    for (const region of REGIONS.filter((r) => r.available)) {
+      await fs.mkdir(path.join(this.dataRoot, region.id), { recursive: true });
+    }
+
+    logger.info(`[DataResidency] Initialized — ${REGIONS.filter((r) => r.available).length} regions, data root: ${this.dataRoot}`);
   }
 
   // ─── Region Management ───
@@ -109,7 +130,6 @@ export class DataResidencyManager {
       throw new Error(`Region "${config.regionId}" is not available`);
     }
 
-    // Generate encryption key if enabled
     if (config.encryptionEnabled && !this.keys.has(config.keyId)) {
       this.generateKey(config.tenantId);
       const keys = Array.from(this.keys.values()).filter((k) => k.tenantId === config.tenantId);
@@ -123,6 +143,176 @@ export class DataResidencyManager {
 
   getTenantConfig(tenantId: string): TenantDataConfig | undefined {
     return this.tenantConfigs.get(tenantId);
+  }
+
+  // ─── Region-Routed Data Storage ───
+  // Writes data to the correct region directory, with optional encryption.
+
+  async storeData(tenantId: string, objectKey: string, data: string): Promise<StoredObject> {
+    const config = this.tenantConfigs.get(tenantId);
+    const regionId = config?.regionId || "local";
+    const region = this.getRegion(regionId);
+    if (!region) throw new Error(`Region "${regionId}" not found`);
+
+    // Resolve storage path: dataRoot/region/tenant/key
+    const tenantDir = path.join(this.dataRoot, regionId, tenantId);
+    await fs.mkdir(tenantDir, { recursive: true });
+    const filePath = path.join(tenantDir, this.sanitizeKey(objectKey));
+
+    let dataToWrite = data;
+    let encrypted = false;
+
+    // Apply PII masking if enabled
+    if (config?.piiMaskingEnabled) {
+      dataToWrite = this.maskPII(dataToWrite);
+    }
+
+    // Encrypt if enabled
+    if (config?.encryptionEnabled) {
+      const encResult = this.encrypt(dataToWrite, tenantId);
+      dataToWrite = JSON.stringify(encResult);
+      encrypted = true;
+    }
+
+    await fs.writeFile(filePath, dataToWrite, "utf-8");
+
+    const obj: StoredObject = {
+      id: `obj_${crypto.randomBytes(8).toString("hex")}`,
+      tenantId,
+      regionId,
+      key: objectKey,
+      encrypted,
+      size: Buffer.byteLength(dataToWrite),
+      createdAt: new Date().toISOString(),
+      expiresAt: config?.dataRetentionDays
+        ? new Date(Date.now() + config.dataRetentionDays * 86400_000).toISOString()
+        : undefined,
+    };
+
+    this.objectIndex.set(`${tenantId}:${objectKey}`, obj);
+    logger.info(`[DataResidency] Stored ${objectKey} → region=${regionId}, encrypted=${encrypted}, size=${obj.size}`);
+    return obj;
+  }
+
+  async retrieveData(tenantId: string, objectKey: string): Promise<string> {
+    const config = this.tenantConfigs.get(tenantId);
+    const regionId = config?.regionId || "local";
+
+    const filePath = path.join(this.dataRoot, regionId, tenantId, this.sanitizeKey(objectKey));
+
+    let data: string;
+    try {
+      data = await fs.readFile(filePath, "utf-8");
+    } catch {
+      throw new Error(`Object "${objectKey}" not found in region "${regionId}"`);
+    }
+
+    // Decrypt if encrypted
+    if (config?.encryptionEnabled) {
+      try {
+        const encrypted = JSON.parse(data) as EncryptedData;
+        data = this.decrypt(encrypted);
+      } catch {
+        // Data may not be encrypted (pre-encryption data)
+      }
+    }
+
+    return data;
+  }
+
+  async deleteData(tenantId: string, objectKey: string): Promise<boolean> {
+    const config = this.tenantConfigs.get(tenantId);
+    const regionId = config?.regionId || "local";
+    const filePath = path.join(this.dataRoot, regionId, tenantId, this.sanitizeKey(objectKey));
+
+    try {
+      await fs.unlink(filePath);
+      this.objectIndex.delete(`${tenantId}:${objectKey}`);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async listData(tenantId: string): Promise<StoredObject[]> {
+    return Array.from(this.objectIndex.values()).filter((o) => o.tenantId === tenantId);
+  }
+
+  /**
+   * Migrate data between regions — re-stores all tenant data in the new region.
+   */
+  async migrateData(tenantId: string, targetRegionId: string): Promise<{ migrated: number; errors: number }> {
+    const config = this.tenantConfigs.get(tenantId);
+    const sourceRegionId = config?.regionId || "local";
+
+    if (sourceRegionId === targetRegionId) return { migrated: 0, errors: 0 };
+
+    const exportCheck = this.canExportData(tenantId, targetRegionId);
+    if (!exportCheck.allowed) throw new Error(exportCheck.reason || "Export not allowed");
+
+    const sourceDir = path.join(this.dataRoot, sourceRegionId, tenantId);
+    const targetDir = path.join(this.dataRoot, targetRegionId, tenantId);
+    await fs.mkdir(targetDir, { recursive: true });
+
+    let migrated = 0;
+    let errors = 0;
+
+    try {
+      const files = await fs.readdir(sourceDir);
+      for (const file of files) {
+        try {
+          const data = await fs.readFile(path.join(sourceDir, file), "utf-8");
+          await fs.writeFile(path.join(targetDir, file), data, "utf-8");
+          await fs.unlink(path.join(sourceDir, file));
+          migrated++;
+        } catch {
+          errors++;
+        }
+      }
+    } catch {
+      // Source dir may not exist
+    }
+
+    // Update tenant config to new region
+    if (config) {
+      config.regionId = targetRegionId;
+      this.tenantConfigs.set(tenantId, config);
+    }
+
+    logger.info(`[DataResidency] Migrated tenant ${tenantId}: ${sourceRegionId} → ${targetRegionId}, ${migrated} files, ${errors} errors`);
+    return { migrated, errors };
+  }
+
+  /**
+   * Enforce data retention — delete expired objects.
+   */
+  async enforceRetention(): Promise<number> {
+    const now = Date.now();
+    let deleted = 0;
+
+    for (const [key, obj] of this.objectIndex) {
+      if (obj.expiresAt && new Date(obj.expiresAt).getTime() < now) {
+        const ok = await this.deleteData(obj.tenantId, obj.key);
+        if (ok) deleted++;
+      }
+    }
+
+    if (deleted > 0) logger.info(`[DataResidency] Retention cleanup: deleted ${deleted} expired objects`);
+    return deleted;
+  }
+
+  /**
+   * Get storage statistics for a region.
+   */
+  async getRegionStats(regionId: string): Promise<{ objects: number; totalBytes: number; tenants: string[] }> {
+    const objects = Array.from(this.objectIndex.values()).filter((o) => o.regionId === regionId);
+    const totalBytes = objects.reduce((sum, o) => sum + o.size, 0);
+    const tenants = [...new Set(objects.map((o) => o.tenantId))];
+    return { objects: objects.length, totalBytes, tenants };
+  }
+
+  private sanitizeKey(key: string): string {
+    return key.replace(/[^a-zA-Z0-9._-]/g, "_");
   }
 
   // ─── Encryption ───
@@ -148,7 +338,6 @@ export class DataResidencyManager {
     for (const key of existingKeys) {
       key.rotatedAt = new Date().toISOString();
     }
-
     const newKey = this.generateKey(tenantId);
     logger.info(`[DataResidency] Key rotated for tenant ${tenantId}: new key ${newKey.id}`);
     return newKey;
@@ -156,9 +345,7 @@ export class DataResidencyManager {
 
   encrypt(data: string, tenantId: string): EncryptedData {
     const config = this.tenantConfigs.get(tenantId);
-    if (!config?.encryptionEnabled) {
-      throw new Error("Encryption not enabled for this tenant");
-    }
+    if (!config?.encryptionEnabled) throw new Error("Encryption not enabled for this tenant");
 
     const key = this.keys.get(config.keyId);
     if (!key) throw new Error("Encryption key not found");
@@ -198,7 +385,6 @@ export class DataResidencyManager {
   // ─── PII Masking ───
 
   maskPII(text: string): string {
-    // Email masking
     text = text.replace(
       /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
       (email) => {
@@ -206,16 +392,9 @@ export class DataResidencyManager {
         return `${local[0]}***@${domain}`;
       },
     );
-
-    // Phone number masking (Indian + international)
     text = text.replace(/(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, "***-***-****");
-
-    // Aadhaar masking (12 digits)
     text = text.replace(/\b\d{4}\s?\d{4}\s?\d{4}\b/g, "XXXX XXXX ****");
-
-    // PAN masking (Indian)
     text = text.replace(/\b[A-Z]{5}\d{4}[A-Z]\b/g, "XXXXX****X");
-
     return text;
   }
 
@@ -223,11 +402,9 @@ export class DataResidencyManager {
 
   canExportData(tenantId: string, targetRegion: string): { allowed: boolean; reason?: string } {
     const config = this.tenantConfigs.get(tenantId);
-    if (!config) return { allowed: true }; // No restrictions if not configured
-
+    if (!config) return { allowed: true };
     if (config.allowedExportRegions.includes("*")) return { allowed: true };
     if (config.allowedExportRegions.includes(targetRegion)) return { allowed: true };
-
     return {
       allowed: false,
       reason: `Data export to region "${targetRegion}" is not allowed. Permitted regions: ${config.allowedExportRegions.join(", ")}`,
@@ -284,6 +461,53 @@ export class DataResidencyManager {
     router.post("/check-export", (req, res) => {
       const { tenantId, targetRegion } = req.body;
       res.json(this.canExportData(tenantId, targetRegion));
+    });
+
+    // ─── Region-Routed Data Storage API ───
+
+    router.post("/store", async (req, res) => {
+      try {
+        const { tenantId, key, data } = req.body;
+        if (!tenantId || !key || !data) return res.status(400).json({ error: "tenantId, key, data required" });
+        const obj = await this.storeData(tenantId, key, data);
+        res.json(obj);
+      } catch (err) {
+        res.status(500).json({ error: (err as Error).message });
+      }
+    });
+
+    router.get("/retrieve/:tenantId/:key", async (req, res) => {
+      try {
+        const data = await this.retrieveData(req.params.tenantId, req.params.key);
+        res.json({ data });
+      } catch (err) {
+        res.status(404).json({ error: (err as Error).message });
+      }
+    });
+
+    router.delete("/data/:tenantId/:key", async (req, res) => {
+      const ok = await this.deleteData(req.params.tenantId, req.params.key);
+      res.json({ success: ok });
+    });
+
+    router.get("/data/:tenantId", async (req, res) => {
+      const objects = await this.listData(req.params.tenantId);
+      res.json(objects);
+    });
+
+    router.post("/migrate", async (req, res) => {
+      try {
+        const { tenantId, targetRegionId } = req.body;
+        const result = await this.migrateData(tenantId, targetRegionId);
+        res.json(result);
+      } catch (err) {
+        res.status(400).json({ error: (err as Error).message });
+      }
+    });
+
+    router.get("/stats/:regionId", async (req, res) => {
+      const stats = await this.getRegionStats(req.params.regionId);
+      res.json(stats);
     });
 
     return router;

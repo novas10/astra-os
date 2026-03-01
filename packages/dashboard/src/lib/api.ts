@@ -243,3 +243,76 @@ export const sendMessage = (message: string, userId = "dashboard", sessionId?: s
     method: "POST",
     body: JSON.stringify({ message, userId, sessionId }),
   });
+
+// ─── Agent CRUD ───
+
+export const getAgent = (id: string) =>
+  request<{ id: string; name: string; model: string; status: string; channels: string[]; skills: string[] }>(`/agents/${id}`);
+
+export const createAgent = (data: { name: string; model?: string; systemPrompt?: string }) =>
+  request<{ id: string; name: string }>("/agents", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+export const pauseAgent = (id: string) =>
+  request<{ success: boolean }>(`/agents/${id}/pause`, { method: "POST" });
+
+export const resumeAgent = (id: string) =>
+  request<{ success: boolean }>(`/agents/${id}/resume`, { method: "POST" });
+
+export const deleteAgent = (id: string) =>
+  request<{ success: boolean }>(`/agents/${id}`, { method: "DELETE" });
+
+// ─── Workflow CRUD ───
+
+export const fetchWorkflows = () =>
+  request<Array<{ id: string; name: string; description: string; version: string; nodes: unknown[]; entryNode: string }>>("/workflows");
+
+export const getWorkflow = (id: string) =>
+  request<{ id: string; name: string; description: string; version: string; nodes: unknown[]; entryNode: string }>(`/workflows/${id}`);
+
+export const saveWorkflow = (definition: Record<string, unknown>) =>
+  request<{ success: boolean; id: string }>("/workflows", {
+    method: "POST",
+    body: JSON.stringify(definition),
+  });
+
+export const runWorkflow = (id: string, variables?: Record<string, unknown>) =>
+  request<{ id: string; workflowId: string; status: string; history: unknown[] }>(`/workflows/${id}/run`, {
+    method: "POST",
+    body: JSON.stringify({ variables }),
+  });
+
+export const deleteWorkflow = (id: string) =>
+  request<{ success: boolean }>(`/workflows/${id}`, { method: "DELETE" });
+
+// ─── Settings ───
+
+export const fetchSettings = () =>
+  request<{
+    defaultModel: string;
+    maxAgents: number;
+    sessionTtl: number;
+    maxSessions: number;
+    providers: string[];
+    features: { sso: boolean; billing: boolean; dataResidency: boolean };
+  }>("/admin/settings");
+
+export const updateSettings = (settings: Record<string, unknown>) =>
+  request<{ success: boolean; note: string }>("/admin/settings", {
+    method: "PUT",
+    body: JSON.stringify(settings),
+  });
+
+// ─── Security Scan ───
+
+export const runSecurityScan = () =>
+  request<Record<string, unknown>>("/admin/security/scan", { method: "POST" });
+
+// ─── Memory Search ───
+
+export const searchMemory = (query: string, mode: "keyword" | "semantic" | "hybrid" = "hybrid", topK = 10) => {
+  const params = new URLSearchParams({ q: query, mode, topK: String(topK) });
+  return request<{ query: string; mode: string; results: string }>(`/memory/search?${params}`);
+};

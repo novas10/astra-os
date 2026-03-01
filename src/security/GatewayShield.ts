@@ -198,8 +198,20 @@ export class GatewayShield {
       return next();
     }
 
-    // For API clients without cookies, pass through (they use API keys)
-    if (!csrfCookie) return next();
+    // For API clients without cookies, require API key/auth header or matching Origin
+    if (!csrfCookie) {
+      const hasApiKey = !!req.headers["x-api-key"];
+      const hasAuthHeader = !!req.headers.authorization;
+      if (hasApiKey || hasAuthHeader) return next();
+
+      const origin = req.headers.origin;
+      const host = req.headers.host;
+      if (origin && host && new URL(origin).host === host) return next();
+
+      logger.warn(`[GatewayShield] CSRF: no cookie, no auth, no matching origin for ${req.method} ${req.path}`);
+      res.status(403).json({ error: "CSRF token validation failed" });
+      return;
+    }
 
     logger.warn(`[GatewayShield] CSRF validation failed for ${req.method} ${req.path}`);
     res.status(403).json({ error: "CSRF token validation failed" });

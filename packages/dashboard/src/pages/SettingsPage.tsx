@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Settings, Key, Users, Building, Shield, Bell, Palette,
-  Globe, Server, Save,
+  Globe, Server, Save, CheckCircle,
 } from "lucide-react";
+import { fetchSettings, updateSettings } from "../lib/api";
 
 interface SettingSection {
   id: string;
@@ -23,6 +25,14 @@ const SECTIONS: SettingSection[] = [
 
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState("general");
+  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: fetchSettings });
+  const [formState, setFormState] = useState<Record<string, string>>({});
+  const saveMutation = useMutation({
+    mutationFn: (data: Record<string, unknown>) => updateSettings(data),
+  });
+
+  const getVal = (key: string, fallback: string) => formState[key] ?? (settings as Record<string, unknown>)?.[key]?.toString() ?? fallback;
+  const setVal = (key: string, value: string) => setFormState((s) => ({ ...s, [key]: value }));
 
   return (
     <div className="p-8">
@@ -63,16 +73,25 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <label className="text-sm text-gray-400 block mb-1">Default Model</label>
-                    <select className="input w-full">
-                      <option>claude-sonnet-4-20250514</option>
-                      <option>gpt-4o</option>
-                      <option>gemini-2.5-pro-preview-06-05</option>
-                      <option>llama3.1</option>
+                    <select
+                      value={getVal("defaultModel", "gpt-4o")}
+                      onChange={(e) => setVal("defaultModel", e.target.value)}
+                      className="input w-full"
+                    >
+                      <option value="claude-sonnet-4-20250514">claude-sonnet-4-20250514</option>
+                      <option value="gpt-4o">gpt-4o</option>
+                      <option value="gemini-2.5-pro-preview-06-05">gemini-2.5-pro-preview-06-05</option>
+                      <option value="llama3.1">llama3.1</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm text-gray-400 block mb-1">Max Iterations per Run</label>
-                    <input type="number" defaultValue={25} className="input w-32" />
+                    <label className="text-sm text-gray-400 block mb-1">Max Agents</label>
+                    <input
+                      type="number"
+                      value={getVal("maxAgents", "50")}
+                      onChange={(e) => setVal("maxAgents", e.target.value)}
+                      className="input w-32"
+                    />
                   </div>
                   <div>
                     <label className="text-sm text-gray-400 block mb-1">Log Level</label>
@@ -85,8 +104,22 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-              <button className="btn-primary flex items-center gap-2">
-                <Save className="w-4 h-4" /> Save Changes
+              <button
+                onClick={() => saveMutation.mutate({
+                  defaultModel: getVal("defaultModel", "gpt-4o"),
+                  maxAgents: parseInt(getVal("maxAgents", "50")),
+                })}
+                disabled={saveMutation.isPending}
+                className="btn-primary flex items-center gap-2"
+              >
+                {saveMutation.isPending ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : saveMutation.isSuccess ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                {saveMutation.isSuccess ? "Saved" : "Save Changes"}
               </button>
             </div>
           )}

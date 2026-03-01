@@ -1,6 +1,7 @@
-# AstraOS — Multi-stage Docker Build
-# Stage 1: Build
-FROM node:22-slim AS builder
+# AstraOS v4.0 — Multi-stage Docker Build
+
+# Stage 1: Build backend
+FROM node:22-slim AS backend-builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -8,17 +9,27 @@ COPY tsconfig.json ./
 COPY src/ ./src/
 RUN npx tsc
 
-# Stage 2: Runtime
+# Stage 2: Build dashboard
+FROM node:22-slim AS dashboard-builder
+WORKDIR /app/packages/dashboard
+COPY packages/dashboard/package*.json ./
+RUN npm ci
+COPY packages/dashboard/ ./
+RUN npm run build
+
+# Stage 3: Runtime
 FROM node:22-slim AS runtime
 WORKDIR /app
 
 # Non-root user for security
 RUN groupadd -r astra && useradd -r -g astra astra
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=backend-builder /app/dist ./dist
+COPY --from=backend-builder /app/node_modules ./node_modules
+COPY --from=dashboard-builder /app/packages/dashboard/dist ./public
 COPY package.json ./
 COPY skills/ ./skills/
+COPY src/docs/openapi.yaml ./dist/docs/openapi.yaml
 
 # Create workspace and logs directories
 RUN mkdir -p workspace logs .astra-memory && chown -R astra:astra /app
