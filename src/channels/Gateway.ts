@@ -49,6 +49,7 @@ import { CredentialVault } from "../security/CredentialVault";
 import { SkillSandbox } from "../security/SkillSandbox";
 import { SkillGenerator } from "../skills/SkillGenerator";
 import { SkillMigrator } from "../skills/SkillMigrator";
+import { createSwaggerRouter } from "../docs/swagger";
 
 export class Gateway {
   private port: number;
@@ -106,6 +107,8 @@ export class Gateway {
     for (const mw of this.gatewayShield.getMiddleware()) {
       this.app.use(mw);
     }
+    // API docs (public, before auth middleware)
+    this.app.use("/docs", createSwaggerRouter());
     this.app.use(createRateLimiter());
     this.app.use(createAuthMiddleware());
     this.server = createServer(this.app);
@@ -617,6 +620,7 @@ export class Gateway {
   ║  Canvas/A2UI  : http://localhost:${process.env.CANVAS_PORT || 18793}                   ║
   ║  A2A Agent    : http://localhost:${this.port}/.well-known/agent.json    ║
   ║  Health       : http://localhost:${this.port}/health                    ║
+  ║  API Docs     : http://localhost:${this.port}/docs                     ║
   ║  Dashboard    : http://localhost:5173                            ║
   ╠══════════════════════════════════════════════════════════════╣
   ║  Channels   : ${this.getActiveChannels().join(", ").padEnd(44)}║

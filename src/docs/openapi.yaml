@@ -1,0 +1,2403 @@
+openapi: 3.1.0
+info:
+  title: AstraOS API
+  version: 3.5.0
+  description: |
+    AstraOS — The AI Agent Operating System.
+    Multi-LLM, MCP, A2A, GraphRAG, 14+ channels, 55+ skills, enterprise-grade security.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: AstraOS
+    url: https://github.com/AstraOS-India/astra-os
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+tags:
+  - name: Chat
+    description: Core chat and streaming endpoints
+  - name: Agents
+    description: Agent management
+  - name: Skills
+    description: Skills listing and installation
+  - name: Voice
+    description: Text-to-Speech and Speech-to-Text
+  - name: Webhooks
+    description: Channel webhook endpoints
+  - name: Admin
+    description: Admin dashboard endpoints
+  - name: Auth
+    description: Authentication and RBAC
+  - name: Tenants
+    description: Multi-tenancy management
+  - name: Marketplace
+    description: Skills marketplace
+  - name: Billing
+    description: Stripe billing and subscriptions
+  - name: Audit
+    description: Audit log and compliance
+  - name: SSO
+    description: Single Sign-On (SAML + OIDC)
+  - name: DataResidency
+    description: Data residency and encryption
+  - name: Edge
+    description: Edge runtime and offline sync
+  - name: Security
+    description: GatewayShield security
+  - name: Vault
+    description: Credential vault
+  - name: SkillSecurity
+    description: Skill sandbox, signing, and analysis
+  - name: SkillGenerator
+    description: Skill scaffolding from templates
+  - name: SkillMigrator
+    description: OpenClaw/ClawHub skill import
+  - name: A2A
+    description: Agent-to-Agent protocol
+  - name: Telemetry
+    description: OpenTelemetry metrics and traces
+  - name: Health
+    description: System health checks
+
+paths:
+  # ─── Chat ───
+  /api/chat:
+    post:
+      tags: [Chat]
+      summary: Send a chat message
+      operationId: sendChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  description: The user message
+                sessionId:
+                  type: string
+                  description: Session ID for conversation continuity
+                channel:
+                  type: string
+                  default: api
+                userId:
+                  type: string
+                  default: anonymous
+                model:
+                  type: string
+                  description: LLM model override
+      responses:
+        "200":
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/chat/stream:
+    post:
+      tags: [Chat]
+      summary: Stream a chat response via SSE
+      operationId: streamChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                sessionId:
+                  type: string
+                channel:
+                  type: string
+                  default: api
+                userId:
+                  type: string
+                  default: anonymous
+      responses:
+        "200":
+          description: Server-Sent Events stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  # ─── Agents ───
+  /api/agents:
+    get:
+      tags: [Agents]
+      summary: List all agents
+      operationId: listAgents
+      responses:
+        "200":
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Agent"
+
+  /api/agents/stats:
+    get:
+      tags: [Agents]
+      summary: Get agent statistics
+      operationId: getAgentStats
+      responses:
+        "200":
+          description: Agent statistics
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # ─── Skills ───
+  /api/skills:
+    get:
+      tags: [Skills]
+      summary: List installed skills
+      operationId: listSkills
+      responses:
+        "200":
+          description: List of skills
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Skill"
+
+  /api/skills/install:
+    post:
+      tags: [Skills]
+      summary: Install a skill by name
+      operationId: installSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Installation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /api/skills/templates:
+    get:
+      tags: [SkillGenerator]
+      summary: List available skill templates
+      operationId: listTemplates
+      responses:
+        "200":
+          description: Template list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SkillTemplate"
+
+  /api/skills/templates/{name}:
+    get:
+      tags: [SkillGenerator]
+      summary: Get template details
+      operationId: getTemplate
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillTemplate"
+        "404":
+          description: Template not found
+
+  /api/skills/generate:
+    post:
+      tags: [SkillGenerator]
+      summary: Generate a skill from a template
+      operationId: generateSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [template, name]
+              properties:
+                template:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+                author:
+                  type: string
+                version:
+                  type: string
+                triggers:
+                  type: array
+                  items:
+                    type: string
+                permissions:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Generated skill
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/skills/generate/ai:
+    post:
+      tags: [SkillGenerator]
+      summary: AI-generate a skill from a natural language description
+      operationId: generateSkillAI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description]
+              properties:
+                description:
+                  type: string
+                name:
+                  type: string
+                author:
+                  type: string
+      responses:
+        "200":
+          description: AI-generated skill
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/skills/validate:
+    post:
+      tags: [SkillGenerator]
+      summary: Validate a skill file
+      operationId: validateSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+  # ─── Skill Migrator ───
+  /api/skills/import/clawhub:
+    post:
+      tags: [SkillMigrator]
+      summary: Import skills from ClawHub
+      operationId: importFromClawHub
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                slug:
+                  type: string
+                slugs:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/skills/import/url:
+    post:
+      tags: [SkillMigrator]
+      summary: Import skill from a Git URL
+      operationId: importFromUrl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+      responses:
+        "200":
+          description: Import result
+
+  /api/skills/import/directory:
+    post:
+      tags: [SkillMigrator]
+      summary: Import skill from local directory
+      operationId: importFromDirectory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+      responses:
+        "200":
+          description: Import result
+
+  /api/skills/import/popular:
+    get:
+      tags: [SkillMigrator]
+      summary: List popular ClawHub skills
+      operationId: listPopularSkills
+      responses:
+        "200":
+          description: Popular skills list
+
+  /api/skills/import/convert:
+    post:
+      tags: [SkillMigrator]
+      summary: Convert OpenClaw format to AstraOS
+      operationId: convertSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+      responses:
+        "200":
+          description: Converted skill
+
+  /api/skills/import/scan:
+    post:
+      tags: [SkillMigrator]
+      summary: Security scan imported content
+      operationId: scanImportedSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+      responses:
+        "200":
+          description: Scan results
+
+  # ─── Voice ───
+  /api/voice/tts:
+    post:
+      tags: [Voice]
+      summary: Text-to-Speech
+      operationId: textToSpeech
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                voice_id:
+                  type: string
+      responses:
+        "200":
+          description: Audio data
+          content:
+            audio/mpeg:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/voice/stt:
+    post:
+      tags: [Voice]
+      summary: Speech-to-Text
+      operationId: speechToText
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          description: Transcription result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/STTResult"
+
+  # ─── Auth ───
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with API key or email
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                apiKey:
+                  type: string
+                email:
+                  type: string
+      responses:
+        "200":
+          description: JWT token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: "#/components/schemas/User"
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      operationId: getCurrentUser
+      responses:
+        "200":
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /api/auth/users:
+    get:
+      tags: [Auth]
+      summary: List all users (admin)
+      operationId: listUsers
+      responses:
+        "200":
+          description: Users list
+    post:
+      tags: [Auth]
+      summary: Create a new user (admin)
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email:
+                  type: string
+                role:
+                  type: string
+                  enum: [admin, developer, operator, viewer]
+      responses:
+        "201":
+          description: Created user
+
+  /api/auth/users/{id}:
+    patch:
+      tags: [Auth]
+      summary: Update user (admin)
+      operationId: updateUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                active:
+                  type: boolean
+      responses:
+        "200":
+          description: Updated user
+    delete:
+      tags: [Auth]
+      summary: Delete user (admin)
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
+  /api/auth/users/{id}/rotate-key:
+    post:
+      tags: [Auth]
+      summary: Rotate user API key
+      operationId: rotateUserKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: New API key
+
+  # ─── Tenants ───
+  /api/admin/tenants:
+    get:
+      tags: [Tenants]
+      summary: List all tenants
+      operationId: listTenants
+      responses:
+        "200":
+          description: Tenants list
+    post:
+      tags: [Tenants]
+      summary: Create a new tenant
+      operationId: createTenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, plan]
+              properties:
+                name:
+                  type: string
+                plan:
+                  type: string
+                  enum: [free, pro, team, enterprise]
+      responses:
+        "201":
+          description: Created tenant
+
+  /api/admin/tenants/{id}:
+    get:
+      tags: [Tenants]
+      summary: Get tenant details
+      operationId: getTenant
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tenant details
+    patch:
+      tags: [Tenants]
+      summary: Update tenant
+      operationId: updateTenant
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated tenant
+    delete:
+      tags: [Tenants]
+      summary: Delete tenant
+      operationId: deleteTenant
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
+  /api/admin/tenants/{id}/usage:
+    get:
+      tags: [Tenants]
+      summary: Get tenant usage statistics
+      operationId: getTenantUsage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Usage stats
+
+  /api/admin/tenants/{id}/api-keys:
+    post:
+      tags: [Tenants]
+      summary: Generate API key for tenant
+      operationId: createTenantApiKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: New API key
+
+  /api/admin/tenants/{id}/api-keys/{key}:
+    delete:
+      tags: [Tenants]
+      summary: Revoke tenant API key
+      operationId: revokeTenantApiKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Revoked
+
+  # ─── Marketplace ───
+  /api/marketplace/search:
+    get:
+      tags: [Marketplace]
+      summary: Search marketplace skills
+      operationId: searchMarketplace
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Search results
+
+  /api/marketplace/skills/{id}:
+    get:
+      tags: [Marketplace]
+      summary: Get skill details
+      operationId: getMarketplaceSkill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Skill details
+    delete:
+      tags: [Marketplace]
+      summary: Uninstall a skill
+      operationId: uninstallSkill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Uninstalled
+
+  /api/marketplace/skills/{id}/install:
+    post:
+      tags: [Marketplace]
+      summary: Install a skill from marketplace
+      operationId: installMarketplaceSkill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Installed
+
+  /api/marketplace/skills/{id}/update:
+    post:
+      tags: [Marketplace]
+      summary: Update an installed skill
+      operationId: updateMarketplaceSkill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated
+
+  /api/marketplace/skills/{id}/rate:
+    post:
+      tags: [Marketplace]
+      summary: Rate and review a skill
+      operationId: rateSkill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                review:
+                  type: string
+      responses:
+        "200":
+          description: Rated
+
+  /api/marketplace/skills/{id}/reviews:
+    get:
+      tags: [Marketplace]
+      summary: Get skill reviews
+      operationId: getSkillReviews
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reviews list
+
+  /api/marketplace/skills/{id}/dependencies:
+    get:
+      tags: [Marketplace]
+      summary: Get skill dependencies
+      operationId: getSkillDependencies
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dependency list
+
+  /api/marketplace/skills/{id}/badge:
+    get:
+      tags: [Marketplace]
+      summary: Get skill install badge
+      operationId: getSkillBadge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SVG badge
+
+  /api/marketplace/installed:
+    get:
+      tags: [Marketplace]
+      summary: List installed marketplace skills
+      operationId: listInstalledMarketplace
+      responses:
+        "200":
+          description: Installed skills
+
+  /api/marketplace/publish:
+    post:
+      tags: [Marketplace]
+      summary: Publish a skill to marketplace
+      operationId: publishSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, version, description]
+              properties:
+                name:
+                  type: string
+                version:
+                  type: string
+                description:
+                  type: string
+      responses:
+        "200":
+          description: Published
+
+  /api/marketplace/categories:
+    get:
+      tags: [Marketplace]
+      summary: List skill categories
+      operationId: listCategories
+      responses:
+        "200":
+          description: Categories
+
+  /api/marketplace/collections:
+    get:
+      tags: [Marketplace]
+      summary: Get curated skill collections
+      operationId: listCollections
+      responses:
+        "200":
+          description: Collections
+
+  /api/marketplace/trending:
+    get:
+      tags: [Marketplace]
+      summary: Get trending skills
+      operationId: getTrending
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+      responses:
+        "200":
+          description: Trending skills
+
+  /api/marketplace/featured:
+    get:
+      tags: [Marketplace]
+      summary: Get featured skills
+      operationId: getFeatured
+      responses:
+        "200":
+          description: Featured skills
+
+  /api/marketplace/stats:
+    get:
+      tags: [Marketplace]
+      summary: Get marketplace statistics
+      operationId: getMarketplaceStats
+      responses:
+        "200":
+          description: Statistics
+
+  /api/marketplace/bulk-install:
+    post:
+      tags: [Marketplace]
+      summary: Bulk install skills
+      operationId: bulkInstall
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Bulk install results
+
+  # ─── Billing ───
+  /api/billing/plans:
+    get:
+      tags: [Billing]
+      summary: List subscription plans
+      operationId: listPlans
+      security: []
+      responses:
+        "200":
+          description: Available plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Plan"
+
+  /api/billing/subscription/{tenantId}:
+    get:
+      tags: [Billing]
+      summary: Get tenant subscription
+      operationId: getSubscription
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Subscription details
+
+  /api/billing/checkout:
+    post:
+      tags: [Billing]
+      summary: Create Stripe checkout session
+      operationId: createCheckout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tenantId, planId]
+              properties:
+                tenantId:
+                  type: string
+                planId:
+                  type: string
+      responses:
+        "200":
+          description: Checkout session URL
+
+  /api/billing/cancel/{tenantId}:
+    post:
+      tags: [Billing]
+      summary: Cancel subscription
+      operationId: cancelSubscription
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cancelled
+
+  /api/billing/change-plan/{tenantId}:
+    post:
+      tags: [Billing]
+      summary: Change subscription plan
+      operationId: changePlan
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [planId]
+              properties:
+                planId:
+                  type: string
+      responses:
+        "200":
+          description: Plan changed
+
+  /api/billing/usage/{tenantId}:
+    get:
+      tags: [Billing]
+      summary: Get usage summary
+      operationId: getUsage
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: metric
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Usage summary
+
+  /api/billing/invoices/{tenantId}:
+    get:
+      tags: [Billing]
+      summary: Get tenant invoices
+      operationId: getInvoices
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoices list
+
+  /api/billing/webhook:
+    post:
+      tags: [Billing]
+      summary: Stripe webhook handler
+      operationId: stripeWebhook
+      security: []
+      responses:
+        "200":
+          description: Webhook processed
+
+  /api/billing/portal:
+    post:
+      tags: [Billing]
+      summary: Create Stripe customer portal session
+      operationId: createPortal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tenantId]
+              properties:
+                tenantId:
+                  type: string
+      responses:
+        "200":
+          description: Portal session URL
+
+  # ─── Audit ───
+  /api/admin/audit:
+    get:
+      tags: [Audit]
+      summary: Query audit log
+      operationId: queryAudit
+      parameters:
+        - name: tenantId
+          in: query
+          schema:
+            type: string
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: resourceType
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Audit entries
+
+  /api/admin/audit/stats:
+    get:
+      tags: [Audit]
+      summary: Get audit statistics
+      operationId: getAuditStats
+      responses:
+        "200":
+          description: Audit statistics
+
+  /api/admin/audit/verify:
+    get:
+      tags: [Audit]
+      summary: Verify audit chain integrity
+      operationId: verifyAuditChain
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  entries:
+                    type: integer
+
+  /api/admin/audit/export/{userId}:
+    get:
+      tags: [Audit]
+      summary: Export user audit data
+      operationId: exportUserAudit
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Exported audit entries
+
+  /api/admin/audit/gdpr/{userId}:
+    delete:
+      tags: [Audit]
+      summary: GDPR right to erasure
+      operationId: gdprDelete
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Data deleted
+
+  # ─── SSO ───
+  /api/sso/providers:
+    get:
+      tags: [SSO]
+      summary: List SSO providers
+      operationId: listSSOProviders
+      responses:
+        "200":
+          description: SSO providers
+    post:
+      tags: [SSO]
+      summary: Add SSO provider
+      operationId: addSSOProvider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, name]
+              properties:
+                type:
+                  type: string
+                  enum: [saml, oidc]
+                name:
+                  type: string
+                config:
+                  type: object
+      responses:
+        "201":
+          description: Provider added
+
+  /api/sso/login/{providerId}:
+    get:
+      tags: [SSO]
+      summary: Initiate SSO login
+      operationId: initiateSSOLogin
+      security: []
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to identity provider
+
+  /api/sso/callback/oidc:
+    get:
+      tags: [SSO]
+      summary: OIDC callback
+      operationId: oidcCallback
+      security: []
+      responses:
+        "200":
+          description: Authentication result
+
+  /api/sso/callback/saml:
+    post:
+      tags: [SSO]
+      summary: SAML callback
+      operationId: samlCallback
+      security: []
+      responses:
+        "200":
+          description: Authentication result
+
+  /api/sso/providers/{id}:
+    delete:
+      tags: [SSO]
+      summary: Delete SSO provider
+      operationId: deleteSSOProvider
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
+  # ─── Data Residency ───
+  /api/admin/data-residency/regions:
+    get:
+      tags: [DataResidency]
+      summary: List available data regions
+      operationId: listRegions
+      responses:
+        "200":
+          description: Available regions
+
+  /api/admin/data-residency/regions/{standard}:
+    get:
+      tags: [DataResidency]
+      summary: Get regions by compliance standard
+      operationId: getRegionsByStandard
+      parameters:
+        - name: standard
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [gdpr, soc2, hipaa, dpdp, pdpa]
+      responses:
+        "200":
+          description: Compliant regions
+
+  /api/admin/data-residency/config/{tenantId}:
+    get:
+      tags: [DataResidency]
+      summary: Get tenant data residency config
+      operationId: getResidencyConfig
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Residency configuration
+
+  /api/admin/data-residency/config:
+    post:
+      tags: [DataResidency]
+      summary: Configure tenant data residency
+      operationId: setResidencyConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tenantId, region]
+              properties:
+                tenantId:
+                  type: string
+                region:
+                  type: string
+      responses:
+        "200":
+          description: Configured
+
+  /api/admin/data-residency/keys/{tenantId}/rotate:
+    post:
+      tags: [DataResidency]
+      summary: Rotate encryption key
+      operationId: rotateEncryptionKey
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Key rotated
+
+  /api/admin/data-residency/encrypt:
+    post:
+      tags: [DataResidency]
+      summary: Encrypt data for tenant
+      operationId: encryptData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tenantId, data]
+              properties:
+                tenantId:
+                  type: string
+                data:
+                  type: string
+      responses:
+        "200":
+          description: Encrypted data
+
+  /api/admin/data-residency/check-export:
+    post:
+      tags: [DataResidency]
+      summary: Check if data export to region is allowed
+      operationId: checkExport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tenantId, targetRegion]
+              properties:
+                tenantId:
+                  type: string
+                targetRegion:
+                  type: string
+      responses:
+        "200":
+          description: Export check result
+
+  # ─── Edge Runtime ───
+  /api/edge/status:
+    get:
+      tags: [Edge]
+      summary: Get edge runtime status
+      operationId: getEdgeStatus
+      responses:
+        "200":
+          description: Edge runtime status
+
+  /api/edge/config:
+    get:
+      tags: [Edge]
+      summary: Get edge configuration
+      operationId: getEdgeConfig
+      responses:
+        "200":
+          description: Edge config
+
+  /api/edge/sync:
+    post:
+      tags: [Edge]
+      summary: Trigger manual cloud sync
+      operationId: triggerSync
+      responses:
+        "200":
+          description: Sync result
+
+  /api/edge/connectivity:
+    get:
+      tags: [Edge]
+      summary: Check cloud connectivity
+      operationId: checkConnectivity
+      responses:
+        "200":
+          description: Connectivity status
+
+  /api/edge/queue:
+    get:
+      tags: [Edge]
+      summary: Get sync queue
+      operationId: getSyncQueue
+      responses:
+        "200":
+          description: Queue status
+
+  /api/edge/receive:
+    post:
+      tags: [Edge]
+      summary: Receive sync from edge nodes
+      operationId: receiveSync
+      responses:
+        "200":
+          description: Sync received
+
+  # ─── Security ───
+  /api/security/report:
+    get:
+      tags: [Security]
+      summary: Get security report
+      operationId: getSecurityReport
+      responses:
+        "200":
+          description: Security report with grade
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecurityReport"
+
+  /api/security/blocked-ips:
+    get:
+      tags: [Security]
+      summary: List blocked IPs
+      operationId: listBlockedIPs
+      responses:
+        "200":
+          description: Blocked IPs list
+
+  /api/security/blocked-ips/{ip}:
+    delete:
+      tags: [Security]
+      summary: Unblock IP
+      operationId: unblockIP
+      parameters:
+        - name: ip
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Unblocked
+
+  /api/security/check-exposure:
+    post:
+      tags: [Security]
+      summary: Check public exposure
+      operationId: checkExposure
+      responses:
+        "200":
+          description: Exposure status
+
+  /api/security/csrf-token:
+    get:
+      tags: [Security]
+      summary: Generate CSRF token
+      operationId: getCsrfToken
+      responses:
+        "200":
+          description: CSRF token
+
+  # ─── Credential Vault ───
+  /api/admin/credentials:
+    get:
+      tags: [Vault]
+      summary: List credentials (names only)
+      operationId: listCredentials
+      responses:
+        "200":
+          description: Credential metadata list
+    post:
+      tags: [Vault]
+      summary: Store new credential
+      operationId: storeCredential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, value]
+              properties:
+                name:
+                  type: string
+                value:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        "201":
+          description: Stored
+
+  /api/admin/credentials/audit:
+    get:
+      tags: [Vault]
+      summary: Get credential access audit log
+      operationId: getCredentialAudit
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Access log
+
+  /api/admin/credentials/export:
+    post:
+      tags: [Vault]
+      summary: Export encrypted vault backup
+      operationId: exportVault
+      responses:
+        "200":
+          description: Encrypted backup
+
+  /api/admin/credentials/import:
+    post:
+      tags: [Vault]
+      summary: Import encrypted vault backup
+      operationId: importVault
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [backup]
+              properties:
+                backup:
+                  type: string
+      responses:
+        "200":
+          description: Imported
+
+  /api/admin/credentials/{name}:
+    get:
+      tags: [Vault]
+      summary: Retrieve credential value
+      operationId: getCredential
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Decrypted value
+    delete:
+      tags: [Vault]
+      summary: Delete credential
+      operationId: deleteCredential
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+
+  /api/admin/credentials/{name}/rotate:
+    post:
+      tags: [Vault]
+      summary: Rotate credential
+      operationId: rotateCredential
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newValue]
+              properties:
+                newValue:
+                  type: string
+      responses:
+        "200":
+          description: Rotated
+
+  # ─── Skill Security ───
+  /api/security/skills/analyze:
+    post:
+      tags: [SkillSecurity]
+      summary: Deep security analysis of skill
+      operationId: analyzeSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [files]
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      content:
+                        type: string
+      responses:
+        "200":
+          description: Analysis result
+
+  /api/security/skills/sign:
+    post:
+      tags: [SkillSecurity]
+      summary: Sign skill with Ed25519
+      operationId: signSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [skillDir, privateKey]
+              properties:
+                skillDir:
+                  type: string
+                privateKey:
+                  type: string
+      responses:
+        "200":
+          description: Signature
+
+  /api/security/skills/verify:
+    post:
+      tags: [SkillSecurity]
+      summary: Verify skill signature
+      operationId: verifySkillSignature
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [skillDir, publicKey]
+              properties:
+                skillDir:
+                  type: string
+                publicKey:
+                  type: string
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+
+  /api/security/skills/quarantine:
+    get:
+      tags: [SkillSecurity]
+      summary: List quarantined skills
+      operationId: listQuarantined
+      responses:
+        "200":
+          description: Quarantined skills
+
+  /api/security/skills/{id}/quarantine:
+    post:
+      tags: [SkillSecurity]
+      summary: Quarantine a skill
+      operationId: quarantineSkill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Quarantined
+    delete:
+      tags: [SkillSecurity]
+      summary: Remove from quarantine
+      operationId: unquarantineSkill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Removed from quarantine
+
+  /api/security/skills/{id}/report:
+    post:
+      tags: [SkillSecurity]
+      summary: Report skill as malicious
+      operationId: reportSkill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Reported
+
+  /api/security/skills/{id}/reputation:
+    get:
+      tags: [SkillSecurity]
+      summary: Get skill reputation score
+      operationId: getSkillReputation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reputation score
+
+  /api/security/skills/keygen:
+    post:
+      tags: [SkillSecurity]
+      summary: Generate Ed25519 key pair
+      operationId: generateKeyPair
+      responses:
+        "200":
+          description: Key pair
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publicKey:
+                    type: string
+                  privateKey:
+                    type: string
+
+  # ─── A2A Protocol ───
+  /a2a/tasks/send:
+    post:
+      tags: [A2A]
+      summary: Send A2A task
+      operationId: sendA2ATask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/A2ATaskRequest"
+      responses:
+        "200":
+          description: Task result
+
+  /a2a/tasks/sendSubscribe:
+    post:
+      tags: [A2A]
+      summary: Send task with SSE streaming
+      operationId: sendSubscribeA2A
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/A2ATaskRequest"
+      responses:
+        "200":
+          description: SSE event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /a2a/tasks/get:
+    post:
+      tags: [A2A]
+      summary: Get task status
+      operationId: getA2ATask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+      responses:
+        "200":
+          description: Task status
+
+  /a2a/tasks/cancel:
+    post:
+      tags: [A2A]
+      summary: Cancel task
+      operationId: cancelA2ATask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+      responses:
+        "200":
+          description: Task cancelled
+
+  # ─── Telemetry ───
+  /api/metrics:
+    get:
+      tags: [Telemetry]
+      summary: Get system metrics
+      operationId: getMetrics
+      responses:
+        "200":
+          description: Metrics data
+
+  /api/traces:
+    get:
+      tags: [Telemetry]
+      summary: Get recent traces
+      operationId: getTraces
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Trace list
+
+  # ─── Admin ───
+  /api/admin/stats:
+    get:
+      tags: [Admin]
+      summary: Get system statistics
+      operationId: getAdminStats
+      responses:
+        "200":
+          description: System statistics
+
+  /api/admin/sessions:
+    get:
+      tags: [Admin]
+      summary: List active sessions
+      operationId: listSessions
+      responses:
+        "200":
+          description: Sessions list
+
+  /api/admin/sessions/{id}:
+    delete:
+      tags: [Admin]
+      summary: Destroy a session
+      operationId: destroySession
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session destroyed
+
+  /api/admin/conversations:
+    get:
+      tags: [Admin]
+      summary: List all conversations
+      operationId: listConversations
+      responses:
+        "200":
+          description: Conversations list
+
+  # ─── WebChat ───
+  /api/webchat/embed:
+    get:
+      tags: [Chat]
+      summary: Get WebChat embed code
+      operationId: getWebChatEmbed
+      responses:
+        "200":
+          description: Embed code snippet
+
+  # ─── Webhooks ───
+  /webhook/telegram:
+    post:
+      tags: [Webhooks]
+      summary: Telegram webhook
+      operationId: telegramWebhook
+      security: []
+      responses:
+        "200":
+          description: Processed
+
+  /webhook/whatsapp:
+    get:
+      tags: [Webhooks]
+      summary: WhatsApp verification
+      operationId: whatsappVerify
+      security: []
+      parameters:
+        - name: hub.mode
+          in: query
+          schema:
+            type: string
+        - name: hub.verify_token
+          in: query
+          schema:
+            type: string
+        - name: hub.challenge
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Challenge response
+    post:
+      tags: [Webhooks]
+      summary: WhatsApp message webhook
+      operationId: whatsappWebhook
+      security: []
+      responses:
+        "200":
+          description: Processed
+
+  /webhook/discord:
+    post:
+      tags: [Webhooks]
+      summary: Discord interactions webhook
+      operationId: discordWebhook
+      security: []
+      responses:
+        "200":
+          description: Processed
+
+  /webhook/slack:
+    post:
+      tags: [Webhooks]
+      summary: Slack events webhook
+      operationId: slackWebhook
+      security: []
+      responses:
+        "200":
+          description: Processed
+
+  /webhook/teams:
+    post:
+      tags: [Webhooks]
+      summary: Microsoft Teams webhook
+      operationId: teamsWebhook
+      security: []
+      responses:
+        "200":
+          description: Processed
+
+  /webhook/google-chat:
+    post:
+      tags: [Webhooks]
+      summary: Google Chat webhook
+      operationId: googleChatWebhook
+      security: []
+      responses:
+        "200":
+          description: Processed
+
+  /webhook/zalo:
+    post:
+      tags: [Webhooks]
+      summary: Zalo webhook
+      operationId: zaloWebhook
+      security: []
+      responses:
+        "200":
+          description: Processed
+
+  /webhook/phone:
+    post:
+      tags: [Webhooks]
+      summary: Phone/Telnyx webhook
+      operationId: phoneWebhook
+      security: []
+      responses:
+        "200":
+          description: Processed
+
+  /webhook/heartbeat/{taskId}:
+    post:
+      tags: [Webhooks]
+      summary: Heartbeat task webhook
+      operationId: heartbeatWebhook
+      security: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Processed
+
+  # ─── A2A Discovery ───
+  /.well-known/agent.json:
+    get:
+      tags: [A2A]
+      summary: Agent card (A2A discovery)
+      operationId: getAgentCard
+      security: []
+      responses:
+        "200":
+          description: Agent card
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentCard"
+
+  # ─── Health ───
+  /health:
+    get:
+      tags: [Health]
+      summary: System health check
+      operationId: healthCheck
+      security: []
+      responses:
+        "200":
+          description: System health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+
+  schemas:
+    ChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+        sessionId:
+          type: string
+        iterations:
+          type: integer
+        toolsUsed:
+          type: array
+          items:
+            type: string
+        healed:
+          type: boolean
+
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        model:
+          type: string
+        channels:
+          type: array
+          items:
+            type: string
+
+    Skill:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+
+    SkillTemplate:
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, developer, operator, viewer]
+        active:
+          type: boolean
+
+    Plan:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+        limits:
+          type: object
+          properties:
+            agents:
+              type: integer
+            messagesPerDay:
+              type: integer
+            skills:
+              type: integer
+
+    STTResult:
+      type: object
+      properties:
+        text:
+          type: string
+        confidence:
+          type: number
+        language:
+          type: string
+
+    SecurityReport:
+      type: object
+      properties:
+        grade:
+          type: string
+          enum: [A+, A, B, C, D, F]
+        score:
+          type: integer
+        protections:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              enabled:
+                type: boolean
+
+    A2ATaskRequest:
+      type: object
+      required: [message]
+      properties:
+        id:
+          type: string
+        message:
+          type: object
+          properties:
+            role:
+              type: string
+            parts:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  text:
+                    type: string
+
+    AgentCard:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+        capabilities:
+          type: object
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        service:
+          type: string
+        version:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: number
+        providers:
+          type: array
+          items:
+            type: string
+        skills:
+          type: integer
+        agents:
+          type: integer
+        channels:
+          type: array
+          items:
+            type: string
+        protocols:
+          type: array
+          items:
+            type: string
+        features:
+          type: array
+          items:
+            type: string
+        activeSessions:
+          type: integer
