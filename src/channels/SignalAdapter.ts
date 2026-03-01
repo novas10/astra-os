@@ -55,7 +55,7 @@ export class SignalAdapter implements ChannelAdapter {
         const response = await this.messageHandler(incoming);
         await this.sendMessage({ channelId: incoming.channelId, text: response });
       }
-    } catch {}
+    } catch { /* polling failure is non-fatal */ }
   }
 
   async sendMessage(msg: OutgoingMessage): Promise<void> {

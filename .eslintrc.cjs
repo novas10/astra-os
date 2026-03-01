@@ -19,5 +19,5 @@ module.exports = {
     "prefer-const": "error",
     "no-var": "error",
   },
-  ignorePatterns: ["dist/", "node_modules/", "skills/", "*.js", "*.cjs"],
+  ignorePatterns: ["dist/", "node_modules/", "skills/", "src/__tests__/", "*.js", "*.cjs"],
 };

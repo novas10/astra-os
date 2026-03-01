@@ -4,6 +4,7 @@
  */
 
 import * as crypto from "crypto";
+import { Router } from "express";
 import { logger } from "../utils/logger";
 
 export interface Tenant {
@@ -248,8 +249,7 @@ export class TenantManager {
 
   // ─── Express Router ───
 
-  getRouter(): import("express").Router {
-    const { Router } = require("express") as typeof import("express");
+  getRouter(): Router {
     const router = Router();
 
     router.get("/", (_req, res) => {

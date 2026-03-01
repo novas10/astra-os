@@ -171,7 +171,7 @@ export class DockerSandbox {
       await execAsync(`docker rm -f ${containerId}`);
       this.containers.delete(sessionId);
       logger.info(`[AstraOS] Docker container destroyed: ${containerId.slice(0, 12)}`);
-    } catch {}
+    } catch { /* container may already be gone */ }
   }
 
   async destroyAll(): Promise<void> {

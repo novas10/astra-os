@@ -420,7 +420,7 @@ export class AgentLoop {
       });
 
       await this.memory.saveLongTerm({ content: resp.text, tags: ["session_summary", ...toolsUsed], importance: "medium", timestamp: Date.now() });
-    } catch {}
+    } catch { /* summary extraction is best-effort */ }
   }
 
   private async compactContext(): Promise<void> {

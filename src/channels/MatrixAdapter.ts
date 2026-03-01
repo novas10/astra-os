@@ -69,7 +69,7 @@ export class MatrixAdapter implements ChannelAdapter {
           }
         }
       }
-    } catch {}
+    } catch { /* sync failure is non-fatal */ }
   }
 
   async sendMessage(msg: OutgoingMessage): Promise<void> {

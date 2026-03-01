@@ -160,7 +160,7 @@ export class VoiceEngine {
             ws.close();
             resolve();
           }
-        } catch {}
+        } catch { /* malformed WS message */ }
       });
 
       ws.on("error", reject);

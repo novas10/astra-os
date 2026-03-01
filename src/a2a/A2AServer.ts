@@ -179,7 +179,7 @@ export class A2AServer {
         if (task.state === "completed" || task.state === "failed" || task.state === "canceled") {
           client.end();
         }
-      } catch {}
+      } catch { /* SSE write failure */ }
     }
 
     if (task.state === "completed" || task.state === "failed" || task.state === "canceled") {

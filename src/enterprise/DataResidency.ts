@@ -6,6 +6,7 @@
 import * as crypto from "crypto";
 import * as fs from "fs/promises";
 import * as path from "path";
+import { Router } from "express";
 import { logger } from "../utils/logger";
 
 // ─── Types ───
@@ -235,8 +236,7 @@ export class DataResidencyManager {
 
   // ─── Express Router ───
 
-  getRouter(): import("express").Router {
-    const { Router } = require("express") as typeof import("express");
+  getRouter(): Router {
     const router = Router();
 
     router.get("/regions", (_req, res) => {

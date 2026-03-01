@@ -61,7 +61,7 @@ export class iMessageAdapter implements ChannelAdapter {
           await this.sendMessage({ channelId: incoming.userId, text: response });
         }
       }
-    } catch {}
+    } catch { /* polling failure is non-fatal */ }
   }
 
   async sendMessage(msg: OutgoingMessage): Promise<void> {

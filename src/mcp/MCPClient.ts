@@ -80,7 +80,7 @@ export class MCPClient extends EventEmitter {
           try {
             const msg: JSONRPCMessage = JSON.parse(line);
             this.handleMessage(config.name, msg);
-          } catch {}
+          } catch { /* malformed JSON-RPC message */ }
         }
       }
     });

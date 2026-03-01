@@ -7,6 +7,7 @@
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as crypto from "crypto";
+import { Router } from "express";
 import { logger } from "../utils/logger";
 
 export interface AuditEntry {
@@ -253,8 +254,7 @@ export class AuditLog {
 
   // ─── Express Router ───
 
-  getRouter(): import("express").Router {
-    const { Router } = require("express") as typeof import("express");
+  getRouter(): Router {
     const router = Router();
 
     router.get("/", (req, res) => {

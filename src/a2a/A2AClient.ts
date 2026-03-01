@@ -72,7 +72,7 @@ export class A2AClient {
     let lastTask: A2ATask | null = null;
     let buffer = "";
 
-    while (true) {
+    for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
 
@@ -88,7 +88,7 @@ export class A2AClient {
               lastTask = event.task;
               onUpdate(event.task);
             }
-          } catch {}
+          } catch { /* malformed SSE event */ }
         }
       }
     }

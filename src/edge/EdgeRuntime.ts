@@ -6,6 +6,7 @@
 
 import * as fs from "fs/promises";
 import * as path from "path";
+import { Router } from "express";
 import { logger } from "../utils/logger";
 
 // ─── Types ───
@@ -258,8 +259,7 @@ export class EdgeRuntime {
 
   // ─── Express Router ───
 
-  getRouter(): import("express").Router {
-    const { Router } = require("express") as typeof import("express");
+  getRouter(): Router {
     const router = Router();
 
     router.get("/status", (_req, res) => {

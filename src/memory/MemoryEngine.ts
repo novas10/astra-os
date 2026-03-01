@@ -124,7 +124,7 @@ export class MemoryEngine {
         for (const row of rows) {
           ftsResults.push({ content: `[${row.importance.toUpperCase()}] ${row.content}`, score: -row.rank });
         }
-      } catch {}
+      } catch { /* FTS5 query may fail on special chars */ }
     }
 
     // Real vector search
@@ -138,7 +138,7 @@ export class MemoryEngine {
       try {
         const graphRes = await this.graph.search(query, options.topK);
         graphResults.push(...graphRes.map((r) => ({ content: `[GRAPH] ${r}`, score: 0.5 })));
-      } catch {}
+      } catch { /* graph search is optional */ }
     }
 
     // Reciprocal Rank Fusion (RRF) to merge results from all sources

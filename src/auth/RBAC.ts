@@ -3,7 +3,7 @@
  * Roles, permissions, JWT tokens, and authorization middleware.
  */
 
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, Router } from "express";
 import * as crypto from "crypto";
 import { logger } from "../utils/logger";
 
@@ -313,8 +313,7 @@ export class RBACManager {
 
   // ─── Auth Routes ───
 
-  getRouter(): import("express").Router {
-    const { Router } = require("express") as typeof import("express");
+  getRouter(): Router {
     const router = Router();
 
     // Login (get JWT from API key)
