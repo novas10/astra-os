@@ -1,0 +1,38 @@
+name: astra-os
+region: blr
+services:
+  - name: astra-os
+    github:
+      repo: AstraOS-India/astra-os
+      branch: main
+      deploy_on_push: true
+    build_command: npm ci && npm run build
+    run_command: node dist/index.js
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: professional-xs
+    http_port: 3000
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: ASTRA_API_KEYS
+        type: SECRET
+      - key: ANTHROPIC_API_KEY
+        type: SECRET
+      - key: OPENAI_API_KEY
+        type: SECRET
+      - key: MASTER_ENCRYPTION_KEY
+        type: SECRET
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 30
+
+databases:
+  - name: astra-redis
+    engine: REDIS
+    version: "7"
+    size: db-s-1vcpu-1gb
+    num_nodes: 1

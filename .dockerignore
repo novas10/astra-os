@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+logs
+workspace
+.astra-memory
+*.log
+.git
+.github
+.claude
+*.md

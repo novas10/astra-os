@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+packages/*/node_modules/
+
+# Build output
+dist/
+packages/*/dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+
+# Docker volumes
+data/
+
+# Credential vault
+.astra-vault/
+
+# Skill signatures
+skills/*/*.sig
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Lock files (keep package-lock)
+yarn.lock
+pnpm-lock.yaml

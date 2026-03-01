@@ -1,0 +1,433 @@
+<![CDATA[<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AstraOS v3.5 — The Most Secure AI Agent OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --purple: #8B5CF6; --blue: #3B82F6; --green: #10B981; --saffron: #FF9933; --india-green: #138808; --bg: #050508; --surface: #0D0D1A; --text: #F0EDE8; --muted: #8A8599; --border: rgba(139,92,246,0.15); --red: #EF4444; --amber: #F59E0B; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; overflow-x: hidden; }
+  .mesh { position: fixed; top: -200px; left: -200px; width: 600px; height: 600px; background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%); pointer-events: none; z-index: 0; animation: meshMove 20s ease-in-out infinite alternate; }
+  .mesh-2 { top: auto; left: auto; bottom: -200px; right: -200px; background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%); animation-duration: 27s; animation-direction: alternate-reverse; }
+  @keyframes meshMove { from { transform: translate(0, 0); } to { transform: translate(100px, 60px); } }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 1.2rem 2rem; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); background: rgba(5,5,8,0.7); }
+  .logo { display: flex; align-items: center; gap: 0.6rem; font-size: 1.2rem; font-weight: 800; }
+  .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--purple), var(--blue)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+  .logo span { color: var(--purple); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; font-size: 0.875rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .nav-links a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--purple); }
+  .nav-badge { background: linear-gradient(90deg, var(--saffron), var(--india-green)); color: white; font-size: 0.7rem; font-weight: 700; padding: 0.25rem 0.75rem; border-radius: 999px; }
+  .version-badge { background: rgba(139,92,246,0.15); color: var(--purple); font-family: 'Space Mono', monospace; font-size: 0.65rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 4px; margin-left: 0.5rem; letter-spacing: 0.05em; }
+  .hero { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 8rem 2rem 4rem; }
+  .india-flag-stripe { width: 120px; height: 4px; background: linear-gradient(90deg, var(--saffron) 33%, white 33%, white 66%, var(--india-green) 66%); border-radius: 2px; margin: 0 auto 2rem; }
+  .hero-eyebrow { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--purple); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.5rem; opacity: 0; animation: fadeUp 0.8s ease 0.2s forwards; }
+  .hero-title { font-size: clamp(3.5rem, 10vw, 7rem); font-weight: 800; line-height: 0.9; letter-spacing: -0.04em; opacity: 0; animation: fadeUp 0.8s ease 0.4s forwards; }
+  .hero-title .accent { color: var(--purple); }
+  .hero-title .sub { font-size: clamp(1.4rem, 4vw, 2.3rem); color: var(--muted); display: block; font-weight: 400; margin-top: 0.5rem; letter-spacing: 0; }
+  .hero-subtitle { font-size: 1.2rem; color: var(--muted); max-width: 750px; margin: 2rem auto; line-height: 1.6; opacity: 0; animation: fadeUp 0.8s ease 0.6s forwards; }
+  .hero-subtitle strong { color: var(--text); font-weight: 700; }
+  .cta-group { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-top: 2.5rem; opacity: 0; animation: fadeUp 0.8s ease 0.8s forwards; }
+  .btn-primary { background: var(--purple); color: white; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.9rem; padding: 0.875rem 2rem; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+  .btn-primary:hover { background: var(--blue); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(139,92,246,0.3); }
+  .btn-ghost { background: transparent; color: var(--text); font-family: 'Space Mono', monospace; font-size: 0.8rem; padding: 0.875rem 2rem; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+  .btn-ghost:hover { border-color: var(--purple); color: var(--purple); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+  .stats-bar { display: flex; gap: 0; flex-wrap: wrap; justify-content: center; margin-top: 4rem; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); opacity: 0; animation: fadeUp 0.8s ease 1s forwards; }
+  .stat { padding: 1.2rem 1.3rem; border-right: 1px solid var(--border); text-align: center; }
+  .stat:last-child { border-right: none; }
+  .stat-num { font-size: 1.4rem; font-weight: 800; color: var(--purple); line-height: 1; }
+  .stat-label { font-family: 'Space Mono', monospace; font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.3rem; }
+  section { position: relative; z-index: 1; padding: 6rem 2rem; max-width: 1200px; margin: 0 auto; }
+  .section-tag { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--purple); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; }
+  .section-title { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 1rem; }
+  .section-subtitle { font-size: 1.05rem; color: var(--muted); max-width: 700px; line-height: 1.6; margin-bottom: 2rem; }
+  .advantages { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; margin-top: 3rem; }
+  .advantage-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; transition: border-color 0.3s, transform 0.3s; position: relative; overflow: hidden; }
+  .advantage-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--purple), transparent); opacity: 0; transition: opacity 0.3s; }
+  .advantage-card:hover { border-color: rgba(139,92,246,0.3); transform: translateY(-3px); }
+  .advantage-card:hover::before { opacity: 1; }
+  .card-icon { font-size: 1.3rem; font-weight: 800; margin-bottom: 0.6rem; color: var(--purple); }
+  .card-title { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.3rem; }
+  .card-desc { color: var(--muted); font-size: 0.8rem; line-height: 1.5; }
+  .card-badge { display: inline-block; margin-top: 0.6rem; font-family: 'Space Mono', monospace; font-size: 0.55rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(139,92,246,0.1); color: var(--purple); text-transform: uppercase; letter-spacing: 0.1em; }
+  .card-badge.green { background: rgba(16,185,129,0.1); color: var(--green); }
+  .card-badge.red { background: rgba(239,68,68,0.1); color: var(--red); }
+  .card-badge.amber { background: rgba(245,158,11,0.1); color: var(--amber); }
+  .comparison-wrapper { margin-top: 3rem; border: 1px solid var(--border); border-radius: 14px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  thead { background: var(--surface); }
+  th { padding: 0.75rem 1rem; text-align: left; font-weight: 800; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); border-bottom: 1px solid var(--border); }
+  th:last-child { color: var(--purple); }
+  td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); color: var(--muted); }
+  td:first-child { font-weight: 700; color: var(--text); }
+  td:last-child { color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  .astra-win { color: var(--purple); font-weight: 700; }
+  .cross { color: #ff4444; }
+  .terminal { background: #0a0a0f; border: 1px solid rgba(139,92,246,0.2); border-radius: 12px; overflow: hidden; margin-top: 2rem; }
+  .terminal-header { background: #111118; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.4rem; border-bottom: 1px solid rgba(139,92,246,0.1); }
+  .terminal-body { padding: 1.25rem; font-family: 'Space Mono', monospace; font-size: 0.72rem; line-height: 1.9; }
+  .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .code-dot.red { background: #ff5f57; } .code-dot.yellow { background: #febc2e; } .code-dot.green { background: #28c840; }
+  .t-prompt { color: var(--purple); } .t-cmd { color: var(--text); } .t-output { color: var(--muted); } .t-success { color: var(--green); } .t-cursor { display: inline-block; width: 8px; height: 1em; background: var(--purple); animation: blink 1s step-end infinite; vertical-align: text-bottom; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .security-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+  .security-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; position: relative; overflow: hidden; }
+  .security-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .security-card.shield::before { background: linear-gradient(90deg, var(--green), var(--blue)); }
+  .security-card.vault::before { background: linear-gradient(90deg, var(--purple), var(--blue)); }
+  .security-card.sandbox::before { background: linear-gradient(90deg, var(--amber), var(--red)); }
+  .security-card-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .security-card-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .security-card-desc { color: var(--muted); font-size: 0.82rem; line-height: 1.6; margin-bottom: 1rem; }
+  .security-list { list-style: none; padding: 0; }
+  .security-list li { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--muted); padding: 0.3rem 0; padding-left: 1.2rem; position: relative; }
+  .security-list li::before { content: '+'; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+  .voice-section { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; margin-top: 3rem; }
+  .voice-visual { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2.5rem; text-align: center; }
+  .voice-waveform { display: flex; align-items: center; justify-content: center; gap: 3px; height: 60px; margin: 1.5rem 0; }
+  .voice-bar { width: 4px; background: var(--purple); border-radius: 2px; animation: voicePulse 1.2s ease-in-out infinite; }
+  .voice-bar:nth-child(1) { height: 20px; animation-delay: 0s; }
+  .voice-bar:nth-child(2) { height: 35px; animation-delay: 0.1s; }
+  .voice-bar:nth-child(3) { height: 50px; animation-delay: 0.2s; }
+  .voice-bar:nth-child(4) { height: 40px; animation-delay: 0.3s; }
+  .voice-bar:nth-child(5) { height: 55px; animation-delay: 0.15s; }
+  .voice-bar:nth-child(6) { height: 30px; animation-delay: 0.25s; }
+  .voice-bar:nth-child(7) { height: 45px; animation-delay: 0.35s; }
+  .voice-bar:nth-child(8) { height: 25px; animation-delay: 0.05s; }
+  .voice-bar:nth-child(9) { height: 38px; animation-delay: 0.2s; }
+  @keyframes voicePulse { 0%, 100% { transform: scaleY(0.4); opacity: 0.5; } 50% { transform: scaleY(1); opacity: 1; } }
+  .voice-state { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--green); text-transform: uppercase; letter-spacing: 0.15em; }
+  .voice-features { list-style: none; padding: 0; }
+  .voice-features li { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0; }
+  .voice-features li .vf-icon { color: var(--purple); font-weight: 800; font-size: 0.85rem; min-width: 20px; }
+  .voice-features li .vf-title { font-weight: 700; font-size: 0.9rem; }
+  .voice-features li .vf-desc { color: var(--muted); font-size: 0.78rem; }
+  .deploy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-top: 3rem; }
+  .deploy-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; text-align: center; transition: border-color 0.3s, transform 0.3s; cursor: pointer; text-decoration: none; display: block; }
+  .deploy-card:hover { border-color: rgba(139,92,246,0.3); transform: translateY(-3px); }
+  .deploy-card-name { font-size: 1rem; font-weight: 800; margin-bottom: 0.3rem; color: var(--text); }
+  .deploy-card-desc { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--muted); }
+  .deploy-card-cmd { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--purple); margin-top: 0.75rem; background: rgba(139,92,246,0.08); padding: 0.4rem 0.6rem; border-radius: 6px; }
+  .skills-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 2rem; margin-bottom: 2rem; }
+  .skill-stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; text-align: center; }
+  .skill-stat-num { font-size: 2rem; font-weight: 800; color: var(--purple); }
+  .skill-stat-label { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.25rem; }
+  .migrate-banner { background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.08)); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; display: flex; align-items: center; gap: 2rem; margin-top: 2rem; }
+  .migrate-banner-text { flex: 1; }
+  .migrate-banner-title { font-size: 1rem; font-weight: 800; margin-bottom: 0.3rem; }
+  .migrate-banner-desc { color: var(--muted); font-size: 0.82rem; line-height: 1.5; }
+  .migrate-banner-cmd { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--purple); background: rgba(139,92,246,0.1); padding: 0.5rem 1rem; border-radius: 8px; white-space: nowrap; }
+  footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 3rem 2rem; text-align: center; }
+  .footer-flag { display: inline-flex; gap: 0; height: 6px; width: 48px; border-radius: 3px; overflow: hidden; margin-bottom: 1.5rem; }
+  .footer-flag span { flex: 1; }
+  .ff-saffron { background: var(--saffron); } .ff-white { background: white; } .ff-green { background: var(--india-green); }
+  .footer-text { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+  .footer-sub { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: rgba(138,133,153,0.5); margin-top: 0.5rem; }
+  @media (max-width: 768px) {
+    .voice-section { grid-template-columns: 1fr; }
+    .migrate-banner { flex-direction: column; text-align: center; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mesh"></div>
+<div class="mesh mesh-2"></div>
+<nav>
+  <div class="logo"><div class="logo-icon">*</div><span>Astra</span>OS<span class="version-badge">v3.5</span></div>
+  <ul class="nav-links"><li><a href="#security">Security</a></li><li><a href="#features">Features</a></li><li><a href="#compare">Compare</a></li><li><a href="#voice">Voice</a></li><li><a href="#quickstart">Quickstart</a></li></ul>
+  <span class="nav-badge">Made in India</span>
+</nav>
+
+<!-- ════════ HERO ════════ -->
+<div class="hero">
+  <div class="india-flag-stripe"></div>
+  <p class="hero-eyebrow">Security-First + MCP + A2A + GraphRAG + Talk Mode + 55+ Skills + 14+ Channels</p>
+  <h1 class="hero-title"><span class="accent">Astra</span>OS<span class="sub">The Most Secure AI Agent Operating System</span></h1>
+  <p class="hero-subtitle">The only agent OS with <strong>GatewayShield</strong> security, <strong>CredentialVault</strong>, <strong>SkillSandbox</strong>, <strong>Talk Mode</strong> voice, <strong>14+ channels</strong>, <strong>55+ skills</strong>, <strong>MCP + A2A</strong>, <strong>GraphRAG</strong>, <strong>Computer Use</strong>, <strong>enterprise SSO</strong>, <strong>Stripe billing</strong>, <strong>audit log</strong>, <strong>data residency</strong>, and <strong>edge runtime</strong>. No competitor comes close.</p>
+  <div class="cta-group"><a href="#quickstart" class="btn-primary">Get Started Free</a><a href="https://github.com/AstraOS-India/astra-os" class="btn-ghost">GitHub</a></div>
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-num">55+</div><div class="stat-label">Skills</div></div>
+    <div class="stat"><div class="stat-num">14+</div><div class="stat-label">Channels</div></div>
+    <div class="stat"><div class="stat-num">4</div><div class="stat-label">LLM Providers</div></div>
+    <div class="stat"><div class="stat-num">MCP</div><div class="stat-label">Protocol</div></div>
+    <div class="stat"><div class="stat-num">A2A</div><div class="stat-label">Protocol</div></div>
+    <div class="stat"><div class="stat-num">GraphRAG</div><div class="stat-label">Memory</div></div>
+    <div class="stat"><div class="stat-num">Talk</div><div class="stat-label">Voice Mode</div></div>
+    <div class="stat"><div class="stat-num">SSO</div><div class="stat-label">Enterprise</div></div>
+    <div class="stat"><div class="stat-num">Shield</div><div class="stat-label">Security</div></div>
+    <div class="stat"><div class="stat-num">Edge</div><div class="stat-label">Offline-First</div></div>
+  </div>
+</div>
+
+<!-- ════════ SECURITY-FIRST ════════ -->
+<section id="security">
+  <p class="section-tag">Security-First Architecture</p>
+  <h2 class="section-title">Three Layers of Protection</h2>
+  <p class="section-subtitle">AstraOS v3.5 addresses every known vulnerability in competing platforms with dedicated security subsystems. No plaintext credentials. No token leaks. No unsigned skills.</p>
+  <div class="security-grid">
+    <div class="security-card shield">
+      <div class="security-card-icon">GatewayShield</div>
+      <div class="security-card-title">Gateway Security Layer</div>
+      <p class="security-card-desc">Comprehensive request-level protection that prevents CVE-2026-25253-class attacks, CSRF exploits, and brute force attempts before they reach your agents.</p>
+      <ul class="security-list">
+        <li>Token security — never accepts auth tokens from URL query params</li>
+        <li>CSRF protection — double-submit cookie with SameSite=Strict</li>
+        <li>Brute force lockout — 10 attempts / 30-minute lockout window</li>
+        <li>Public exposure detection with alerting</li>
+        <li>Security headers — HSTS, X-Frame-Options, CSP</li>
+        <li>IP allowlist / denylist network access control</li>
+        <li>Security scoring and grading (A+ to F)</li>
+      </ul>
+    </div>
+    <div class="security-card vault">
+      <div class="security-card-icon">CredentialVault</div>
+      <div class="security-card-title">Encrypted Secret Storage</div>
+      <p class="security-card-desc">All API keys, tokens, and secrets encrypted at rest using AES-256-GCM. Never stores credentials in plaintext. Solves the plaintext credential vulnerability found in competing platforms.</p>
+      <ul class="security-list">
+        <li>AES-256-GCM encryption with per-credential IV and salt</li>
+        <li>GCM authentication tags for tamper detection</li>
+        <li>Key rotation with zero-downtime re-encryption</li>
+        <li>Access audit trail for every credential operation</li>
+        <li>Auto-expiry for time-limited credentials</li>
+        <li>Encrypted import / export transport</li>
+      </ul>
+    </div>
+    <div class="security-card sandbox">
+      <div class="security-card-icon">SkillSandbox</div>
+      <div class="security-card-title">Skill Security &amp; Signing</div>
+      <p class="security-card-desc">Deep static analysis and cryptographic signing prevents supply-chain attacks. Every skill is analyzed, signed, and sandboxed before activation.</p>
+      <ul class="security-list">
+        <li>Ed25519 cryptographic signing for verified publishers</li>
+        <li>Deep static analysis — AST-level pattern detection</li>
+        <li>Permission manifest enforcement</li>
+        <li>Reputation scoring tracking safety history</li>
+        <li>Auto-quarantine system for flagged skills</li>
+        <li>Community reporting for crowdsourced security</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ FEATURES ════════ -->
+<section id="features">
+  <p class="section-tag">Core Capabilities</p>
+  <h2 class="section-title">Everything. In One OS.</h2>
+  <div class="advantages">
+    <div class="advantage-card"><div class="card-icon">MCP</div><div class="card-title">Model Context Protocol</div><p class="card-desc">Full MCP client + server. Discover and expose tools across the AI ecosystem. Linux Foundation standard.</p><span class="card-badge">Client + Server</span></div>
+    <div class="advantage-card"><div class="card-icon">A2A</div><div class="card-title">Agent-to-Agent Protocol</div><p class="card-desc">Google's A2A for inter-agent communication. Agent cards, task lifecycle, SSE streaming.</p><span class="card-badge">Discovery + Tasks</span></div>
+    <div class="advantage-card"><div class="card-icon">GraphRAG</div><div class="card-title">Knowledge Graph Memory</div><p class="card-desc">Real vector embeddings + FTS5 + SQLite knowledge graph with community detection. Three-tier hybrid.</p><span class="card-badge">Vector + FTS5 + Graph</span></div>
+    <div class="advantage-card"><div class="card-icon">Vision</div><div class="card-title">Computer Use + Multi-Modal</div><p class="card-desc">Screenshot-based GUI automation. Image analysis, OCR, document understanding via vision LLMs.</p><span class="card-badge">Screenshot + Click + Type</span></div>
+    <div class="advantage-card"><div class="card-icon">DAG</div><div class="card-title">Workflow Engine</div><p class="card-desc">DAG-based workflow with checkpointing. Conditions, parallel, loops, human-in-the-loop.</p><span class="card-badge">DAG + Checkpoint + Resume</span></div>
+    <div class="advantage-card"><div class="card-icon">Multi-LLM</div><div class="card-title">4 LLM Providers</div><p class="card-desc">Claude, GPT-4o, Gemini, Ollama. Auto-detect, hot-swap per request, streaming.</p><span class="card-badge">Claude + GPT + Gemini + Local</span></div>
+    <div class="advantage-card"><div class="card-icon">14+</div><div class="card-title">Channel Coverage</div><p class="card-desc">WhatsApp, Telegram, Discord, Slack, Teams, Signal, Matrix, Google Chat, iMessage, Zalo, WebChat, Phone, REST, WebSocket.</p><span class="card-badge">14 Channels</span></div>
+    <div class="advantage-card"><div class="card-icon">55+</div><div class="card-title">Bundled Skills</div><p class="card-desc">55 production-ready skills across 10 categories. AstraHub CLI, SkillGenerator with 23 templates, ClawHub migration.</p><span class="card-badge">55+ Skills + 23 Templates</span></div>
+    <div class="advantage-card"><div class="card-icon">Docker</div><div class="card-title">Docker Sandbox</div><p class="card-desc">Ephemeral containers per session. Memory/CPU limits, read-only FS, network isolation.</p><span class="card-badge">Docker + Process Hybrid</span></div>
+    <div class="advantage-card"><div class="card-icon">CDP</div><div class="card-title">Browser Control</div><p class="card-desc">Full Chrome DevTools Protocol: navigate, click, type, screenshot, evaluate, extract.</p><span class="card-badge">Puppeteer + ARIA Tree</span></div>
+    <div class="advantage-card"><div class="card-icon">Talk</div><div class="card-title">Talk Mode Voice</div><p class="card-desc">Full-duplex voice with interrupt, wake word, push-to-talk. ElevenLabs TTS, Whisper/Deepgram STT.</p><span class="card-badge">Interrupt + Wake + PTT</span></div>
+    <div class="advantage-card"><div class="card-icon">OTEL</div><div class="card-title">Observability</div><p class="card-desc">Built-in OpenTelemetry tracing, metrics, histograms. Full visibility into every agent action.</p><span class="card-badge">Traces + Metrics + Spans</span></div>
+    <div class="advantage-card"><div class="card-icon">Heal</div><div class="card-title">Self-Healing</div><p class="card-desc">On failure: read logs, diagnose with LLM, propose patch, retry automatically.</p><span class="card-badge">Diagnose + Patch + Retry</span></div>
+    <div class="advantage-card"><div class="card-icon">Shield</div><div class="card-title">GatewayShield</div><p class="card-desc">CVE prevention, CSRF protection, brute force lockout, security headers, IP access control, security grading.</p><span class="card-badge green">CVE + CSRF + Brute Force</span></div>
+    <div class="advantage-card"><div class="card-icon">Vault</div><div class="card-title">CredentialVault</div><p class="card-desc">AES-256-GCM encrypted credential storage. Key rotation, access audit, auto-expiry. Zero plaintext.</p><span class="card-badge green">AES-256-GCM + Rotation</span></div>
+    <div class="advantage-card"><div class="card-icon">A2UI</div><div class="card-title">Canvas / A2UI</div><p class="card-desc">Agents generate interactive HTML UIs with astra-* attributes. WebSocket push callbacks.</p><span class="card-badge">Agent-to-UI</span></div>
+    <div class="advantage-card"><div class="card-icon">Dashboard</div><div class="card-title">Admin Dashboard</div><p class="card-desc">React + Tailwind dark-mode dashboard. 8 pages: stats, agents, conversations, marketplace, workflow builder, memory, traces, settings.</p><span class="card-badge">React + Vite + Tailwind</span></div>
+    <div class="advantage-card"><div class="card-icon">RBAC</div><div class="card-title">RBAC + Multi-Tenancy</div><p class="card-desc">4 roles, JWT auth, API key management, tenant isolation, plan-based quotas, usage tracking.</p><span class="card-badge">Admin + Dev + Op + Viewer</span></div>
+    <div class="advantage-card"><div class="card-icon">Hub</div><div class="card-title">AstraHub Marketplace</div><p class="card-desc">Browse, install, rate, review, publish. SkillSandbox security scanning, CLI tooling, 10 categories.</p><span class="card-badge">CLI + Publish + Scan</span></div>
+    <div class="advantage-card"><div class="card-icon">SSO</div><div class="card-title">Enterprise SSO</div><p class="card-desc">SAML 2.0 + OpenID Connect with PKCE. Azure AD, Okta, Google Workspace, Auth0, OneLogin.</p><span class="card-badge">SAML + OIDC + PKCE</span></div>
+    <div class="advantage-card"><div class="card-icon">Audit</div><div class="card-title">Immutable Audit Log</div><p class="card-desc">SHA-256 chain-hashed audit trail. SOC2, GDPR, HIPAA compliance. Tamper detection, data export.</p><span class="card-badge">Chain Hash + GDPR + SOC2</span></div>
+    <div class="advantage-card"><div class="card-icon">Billing</div><div class="card-title">Stripe Billing</div><p class="card-desc">Subscriptions, usage metering, invoices, checkout, customer portal, webhook handling.</p><span class="card-badge">Subscribe + Meter + Invoice</span></div>
+    <div class="advantage-card"><div class="card-icon">Region</div><div class="card-title">Data Residency</div><p class="card-desc">7 regions, AES-256-GCM encryption at rest, PII masking (email, phone, Aadhaar, PAN), export compliance.</p><span class="card-badge">7 Regions + Encryption</span></div>
+    <div class="advantage-card"><div class="card-icon">Edge</div><div class="card-title">Edge Runtime</div><p class="card-desc">Offline-first with Ollama local models. Sync queue, connectivity checks, standalone/sync/gateway modes.</p><span class="card-badge">Ollama + Offline + Sync</span></div>
+  </div>
+</section>
+
+<!-- ════════ VS OPENCLAW ════════ -->
+<section id="compare">
+  <p class="section-tag">Head-to-Head</p>
+  <h2 class="section-title">AstraOS vs OpenClaw</h2>
+  <p class="section-subtitle">A focused comparison against the closest competing platform. AstraOS v3.5 leads in security, channels, skills, enterprise features, and voice.</p>
+  <div class="comparison-wrapper">
+    <table>
+      <thead><tr><th>Capability</th><th>OpenClaw</th><th>AstraOS v3.5</th></tr></thead>
+      <tbody>
+        <tr><td>Gateway Security</td><td class="cross">CVE-2026-25253 (token leak via URL)</td><td class="astra-win">GatewayShield (CVE prevention, CSRF, brute force, headers)</td></tr>
+        <tr><td>Credential Storage</td><td class="cross">Plaintext credentials</td><td class="astra-win">CredentialVault (AES-256-GCM encrypted at rest)</td></tr>
+        <tr><td>Skill Security</td><td class="cross">ClawHavoc attack surface</td><td class="astra-win">SkillSandbox (Ed25519 signing, static analysis, quarantine)</td></tr>
+        <tr><td>Channels</td><td>~10</td><td class="astra-win">14+ (+ Zalo, WebChat, Phone)</td></tr>
+        <tr><td>Bundled Skills</td><td>ClaHub (no security scan)</td><td class="astra-win">55+ skills + 23 templates + ClawHub migration</td></tr>
+        <tr><td>Talk Mode</td><td>Basic voice</td><td class="astra-win">Full duplex — interrupt, wake word, push-to-talk, VAD</td></tr>
+        <tr><td>MCP Protocol</td><td class="cross">No</td><td class="astra-win">Full (Client + Server)</td></tr>
+        <tr><td>A2A Protocol</td><td class="cross">No</td><td class="astra-win">Full (Cards + Tasks + SSE)</td></tr>
+        <tr><td>GraphRAG Memory</td><td class="cross">No</td><td class="astra-win">FTS5 + Vector + Knowledge Graph (RRF)</td></tr>
+        <tr><td>Computer Use</td><td class="cross">No</td><td class="astra-win">Screenshot + click + type + scroll</td></tr>
+        <tr><td>Enterprise SSO</td><td class="cross">No</td><td class="astra-win">SAML 2.0 + OIDC (PKCE)</td></tr>
+        <tr><td>RBAC + Multi-Tenant</td><td class="cross">No</td><td class="astra-win">4 roles + JWT + tenant isolation</td></tr>
+        <tr><td>Audit Log</td><td class="cross">No</td><td class="astra-win">SHA-256 chain hash + GDPR</td></tr>
+        <tr><td>Billing / SaaS</td><td class="cross">No</td><td class="astra-win">Stripe subscriptions + usage metering</td></tr>
+        <tr><td>Data Residency</td><td class="cross">No</td><td class="astra-win">7 regions + AES-256 + PII masking</td></tr>
+        <tr><td>Edge / On-Prem</td><td class="cross">No</td><td class="astra-win">Ollama + offline sync + gateway</td></tr>
+        <tr><td>Admin Dashboard</td><td class="cross">No</td><td class="astra-win">React + 8 pages + workflow builder</td></tr>
+        <tr><td>Observability</td><td class="cross">No</td><td class="astra-win">OpenTelemetry (traces, metrics, spans)</td></tr>
+        <tr><td>Self-Healing</td><td class="cross">No</td><td class="astra-win">Log + diagnose + patch + retry</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ════════ TALK MODE ════════ -->
+<section id="voice">
+  <p class="section-tag">Voice AI</p>
+  <h2 class="section-title">Talk Mode</h2>
+  <p class="section-subtitle">Full-duplex conversational voice. Interrupt the agent mid-sentence. Activate by wake word or push-to-talk. Powered by ElevenLabs TTS and Whisper/Deepgram STT.</p>
+  <div class="voice-section">
+    <div class="voice-visual">
+      <div style="font-size:0.7rem;font-family:'Space Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:0.5rem;">Talk Mode Active</div>
+      <div class="voice-waveform">
+        <div class="voice-bar"></div>
+        <div class="voice-bar"></div>
+        <div class="voice-bar"></div>
+        <div class="voice-bar"></div>
+        <div class="voice-bar"></div>
+        <div class="voice-bar"></div>
+        <div class="voice-bar"></div>
+        <div class="voice-bar"></div>
+        <div class="voice-bar"></div>
+      </div>
+      <div class="voice-state">listening &rarr; processing &rarr; speaking &rarr; interrupted</div>
+    </div>
+    <div>
+      <ul class="voice-features">
+        <li><div><span class="vf-icon">~</span></div><div><div class="vf-title">Interrupt Support</div><div class="vf-desc">Interrupt the agent mid-sentence. It stops speaking immediately and starts listening.</div></div></li>
+        <li><div><span class="vf-icon">!</span></div><div><div class="vf-title">Wake Word Detection</div><div class="vf-desc">Configurable wake word activation. Always-on listening with low-power keyword spotting.</div></div></li>
+        <li><div><span class="vf-icon">#</span></div><div><div class="vf-title">Push-to-Talk</div><div class="vf-desc">Manual activation mode for noisy environments. Hold to speak, release to process.</div></div></li>
+        <li><div><span class="vf-icon">&gt;</span></div><div><div class="vf-title">ElevenLabs TTS</div><div class="vf-desc">High-quality text-to-speech with configurable voice, stability, and similarity boost.</div></div></li>
+        <li><div><span class="vf-icon">&lt;</span></div><div><div class="vf-title">Whisper / Deepgram STT</div><div class="vf-desc">Speech-to-text with confidence scoring, language detection, and streaming transcription.</div></div></li>
+        <li><div><span class="vf-icon">=</span></div><div><div class="vf-title">Voice Activity Detection</div><div class="vf-desc">Configurable VAD sensitivity and silence timeout for natural conversation flow.</div></div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SKILLS ECOSYSTEM ════════ -->
+<section id="skills">
+  <p class="section-tag">Skills Ecosystem</p>
+  <h2 class="section-title">55+ Skills. 23 Templates. ClawHub Migration.</h2>
+  <div class="skills-stats">
+    <div class="skill-stat-card"><div class="skill-stat-num">55+</div><div class="skill-stat-label">Bundled Skills</div></div>
+    <div class="skill-stat-card"><div class="skill-stat-num">23</div><div class="skill-stat-label">Scaffold Templates</div></div>
+    <div class="skill-stat-card"><div class="skill-stat-num">10</div><div class="skill-stat-label">Categories</div></div>
+    <div class="skill-stat-card"><div class="skill-stat-num">Ed25519</div><div class="skill-stat-label">Signed &amp; Verified</div></div>
+  </div>
+  <div class="advantages" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+    <div class="advantage-card">
+      <div class="card-icon">Hub</div>
+      <div class="card-title">AstraHub CLI</div>
+      <p class="card-desc">Search, install, publish, and manage skills from the command line. Security scanned by SkillSandbox before activation. Ratings, reviews, and categories.</p>
+      <span class="card-badge">npx astra-hub install weather-alerts</span>
+    </div>
+    <div class="advantage-card">
+      <div class="card-icon">Gen</div>
+      <div class="card-title">SkillGenerator</div>
+      <p class="card-desc">Scaffold production-ready skills from 23 templates: API connector, webhook handler, database query, email manager, Slack bot, smart home, and more.</p>
+      <span class="card-badge">23 Templates Across 10 Categories</span>
+    </div>
+    <div class="advantage-card">
+      <div class="card-icon">Migrate</div>
+      <div class="card-title">ClawHub Migration</div>
+      <p class="card-desc">Import and convert skills from OpenClaw/ClawHub. Auto-converts triggers, tools, and system prompts to AstraOS format. Bulk import with security scanning.</p>
+      <span class="card-badge">Auto-Convert + Security Scan</span>
+    </div>
+  </div>
+  <div class="migrate-banner">
+    <div class="migrate-banner-text">
+      <div class="migrate-banner-title">Migrating from OpenClaw?</div>
+      <div class="migrate-banner-desc">AstraOS automatically converts your ClawHub skills, validates the format, and runs a full security scan before installation. Single skills or bulk import supported.</div>
+    </div>
+    <div class="migrate-banner-cmd">POST /api/skills/migrate</div>
+  </div>
+</section>
+
+<!-- ════════ ONE-CLICK DEPLOY ════════ -->
+<section id="deploy">
+  <p class="section-tag">Deploy Anywhere</p>
+  <h2 class="section-title">One-Click Deploy</h2>
+  <p class="section-subtitle">Deploy AstraOS to your preferred cloud platform in minutes. Docker-ready with multi-stage production builds.</p>
+  <div class="deploy-grid">
+    <a class="deploy-card" href="https://cloud.digitalocean.com/apps/new?repo=https://github.com/AstraOS-India/astra-os">
+      <div class="deploy-card-name">DigitalOcean</div>
+      <div class="deploy-card-desc">App Platform</div>
+      <div class="deploy-card-cmd">doctl apps create --spec .do/app.yaml</div>
+    </a>
+    <a class="deploy-card" href="https://railway.app/template/astra-os">
+      <div class="deploy-card-name">Railway</div>
+      <div class="deploy-card-desc">Instant Deploy</div>
+      <div class="deploy-card-cmd">railway init && railway up</div>
+    </a>
+    <a class="deploy-card" href="https://render.com/deploy?repo=https://github.com/AstraOS-India/astra-os">
+      <div class="deploy-card-name">Render</div>
+      <div class="deploy-card-desc">Blueprint Deploy</div>
+      <div class="deploy-card-cmd">render.yaml blueprint</div>
+    </a>
+    <a class="deploy-card" href="#quickstart">
+      <div class="deploy-card-name">Fly.io</div>
+      <div class="deploy-card-desc">Edge Deploy</div>
+      <div class="deploy-card-cmd">fly launch && fly deploy</div>
+    </a>
+    <a class="deploy-card" href="#quickstart">
+      <div class="deploy-card-name">Docker</div>
+      <div class="deploy-card-desc">Self-Hosted</div>
+      <div class="deploy-card-cmd">docker compose up -d</div>
+    </a>
+  </div>
+</section>
+
+<!-- ════════ QUICKSTART ════════ -->
+<section id="quickstart">
+  <p class="section-tag">Get Started</p>
+  <h2 class="section-title">Running in 60 seconds</h2>
+  <div class="terminal">
+    <div class="terminal-header"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div><span style="font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--muted);margin-left:0.5rem;">bash</span></div>
+    <div class="terminal-body">
+      <div><span class="t-prompt">$</span> <span class="t-cmd">git clone https://github.com/AstraOS-India/astra-os && cd astra-os</span></div>
+      <div><span class="t-prompt">$</span> <span class="t-cmd">npm install && cp .env.example .env</span></div>
+      <div><span class="t-prompt">$</span> <span class="t-cmd">npm run dev</span></div>
+      <br>
+      <div><span class="t-success">AstraOS v3.5 | REST: :3000 | SSE: :3000/api/chat/stream</span></div>
+      <div><span class="t-success">Protocols: MCP, A2A | Providers: anthropic, openai, gemini, ollama</span></div>
+      <div><span class="t-success">Memory: FTS5 + Vector + GraphRAG | Skills: 55 loaded</span></div>
+      <div><span class="t-success">Security: GatewayShield (A+) | CredentialVault | SkillSandbox</span></div>
+      <div><span class="t-success">Dashboard: http://localhost:5173 | RBAC: Active | Marketplace: Ready</span></div>
+      <div><span class="t-success">Enterprise: SSO, Audit, DataResidency (7 regions), Billing, Edge</span></div>
+      <div><span class="t-success">Voice: Talk Mode ready | Channels: 14 active</span></div>
+      <br>
+      <div><span class="t-prompt">$</span> <span class="t-cmd">curl http://localhost:3000/.well-known/agent.json</span></div>
+      <div><span class="t-output">{"name":"AstraOS","version":"3.5","protocols":["a2a","mcp"],"capabilities":[...]}</span></div>
+      <br>
+      <div><span class="t-prompt">$</span> <span class="t-cmd">curl http://localhost:3000/api/security/report</span></div>
+      <div><span class="t-output">{"grade":"A+","score":97,"gatewayShield":true,"credentialVault":true,"skillSandbox":true}</span></div>
+      <br>
+      <div><span class="t-prompt">$</span> <span class="t-cmd">docker compose up -d</span></div>
+      <div><span class="t-success">[+] Running 2/2: astra-os, astra-redis</span></div>
+      <div><span class="t-cursor"></span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-flag"><span class="ff-saffron"></span><span class="ff-white"></span><span class="ff-green"></span></div>
+  <p class="footer-text">Where there is Astra, there is victory.</p>
+  <p class="footer-sub">AstraOS v3.5 | Security-First | 14+ Channels | 55+ Skills | Talk Mode | MCP + A2A + GraphRAG | Enterprise SSO + Billing + Audit | Made in India | MIT License</p>
+</footer>
+<script>
+document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth'})})});
+const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.style.opacity='1';x.target.style.transform='translateY(0)'}})},{threshold:0.1});
+document.querySelectorAll('.advantage-card, .security-card, .deploy-card, .skill-stat-card').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity 0.5s ease, transform 0.5s ease';obs.observe(el)});
+</script>
+</body>
+</html>
+]]>

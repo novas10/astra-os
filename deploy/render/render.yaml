@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: astra-os
+    runtime: node
+    region: singapore
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: ASTRA_API_KEYS
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: MASTER_ENCRYPTION_KEY
+        generateValue: true
+    autoDeploy: true
+
+  - type: redis
+    name: astra-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
