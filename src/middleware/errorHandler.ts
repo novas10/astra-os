@@ -3,7 +3,7 @@
  * Catches unhandled errors, sanitizes responses in production.
  */
 
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
 
 const isProduction = () => process.env.NODE_ENV === "production";

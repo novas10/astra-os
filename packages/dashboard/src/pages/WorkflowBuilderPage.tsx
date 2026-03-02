@@ -8,7 +8,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import {
-  Play, Plus, Save, Trash2, Bot, Wrench, GitBranch,
+  Play, Save, Trash2, Bot, Wrench, GitBranch,
   Layers, RotateCw, UserCheck, ArrowRightLeft, CheckCircle, AlertCircle,
 } from "lucide-react";
 import { saveWorkflow, runWorkflow } from "../lib/api";
@@ -213,7 +213,7 @@ export default function WorkflowBuilderPage() {
             <Background color="#1f2937" gap={20} />
             <Controls
               className="!bg-gray-800 !border-gray-700 !rounded-lg !shadow-lg"
-              style={{ button: { backgroundColor: "#374151", color: "#fff", borderColor: "#4b5563" } } as any}
+              style={{ button: { backgroundColor: "#374151", color: "#fff", borderColor: "#4b5563" } } as React.CSSProperties}
             />
             <MiniMap
               nodeColor="#4c6ef5"

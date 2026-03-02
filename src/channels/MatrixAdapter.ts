@@ -3,7 +3,7 @@
  * Matrix protocol adapter for decentralized messaging
  */
 
-import { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
+import type { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
 
 export class MatrixAdapter implements ChannelAdapter {
   name = "matrix";

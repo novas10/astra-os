@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Shield, ShieldCheck, ShieldAlert, ShieldX, Ban, Clock,
+  Shield, ShieldCheck, ShieldAlert, Ban, Clock,
   AlertTriangle, CheckCircle, XCircle, Eye, RefreshCw, Info,
 } from "lucide-react";
 import { fetchSecurityOverview, runSecurityScan } from "../lib/api";
@@ -58,7 +58,7 @@ function getStatusIcon(status: string) {
 
 export default function SecurityPage() {
   const queryClient = useQueryClient();
-  const { data: overview, isLoading } = useQuery({
+  const { data: overview } = useQuery({
     queryKey: ["security-overview"],
     queryFn: fetchSecurityOverview,
   });

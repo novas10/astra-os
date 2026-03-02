@@ -3,7 +3,7 @@
  * Bearer token + API key authentication for all API routes.
  */
 
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { logger } from "../utils/logger";
 
 export interface AuthConfig {

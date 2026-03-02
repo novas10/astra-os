@@ -5,7 +5,8 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { Router, Request, Response } from "express";
+import type { Request, Response } from "express";
+import { Router } from "express";
 import { logger } from "../utils/logger";
 
 export type TaskState = "submitted" | "working" | "input-required" | "completed" | "failed" | "canceled";

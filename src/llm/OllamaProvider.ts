@@ -3,7 +3,7 @@
  * Ollama local LLM provider (Llama, Mistral, CodeLlama, Phi, etc.)
  */
 
-import { LLMProvider, LLMResponse, LLMMessage, LLMToolDefinition } from "./LLMProvider";
+import type { LLMProvider, LLMResponse, LLMMessage, LLMToolDefinition } from "./LLMProvider";
 
 export class OllamaProvider implements LLMProvider {
   name = "ollama";

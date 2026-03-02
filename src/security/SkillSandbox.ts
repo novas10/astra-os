@@ -11,7 +11,8 @@
  * 6. Community reporting — crowdsourced security
  */
 
-import { Router, Request, Response } from "express";
+import type { Request, Response } from "express";
+import { Router } from "express";
 import * as crypto from "crypto";
 import * as fs from "fs/promises";
 import * as path from "path";

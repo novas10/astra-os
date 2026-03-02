@@ -3,7 +3,7 @@
  * OpenAI GPT LLM provider (GPT-4o, GPT-4, o1, o3, etc.)
  */
 
-import { LLMProvider, LLMResponse, LLMMessage, LLMToolDefinition } from "./LLMProvider";
+import type { LLMProvider, LLMResponse, LLMMessage, LLMToolDefinition } from "./LLMProvider";
 
 export class OpenAIProvider implements LLMProvider {
   name = "openai";

@@ -6,14 +6,14 @@
 import { MemoryEngine } from "../memory/MemoryEngine";
 import { SafeSandbox } from "../sandbox/SafeSandbox";
 import { SemanticSnapshot } from "../tools/SemanticSnapshot";
-import { BrowserEngine } from "../tools/BrowserEngine";
+import { BrowserEngine, type BrowserAction } from "../tools/BrowserEngine";
 import { HeartbeatEngine } from "../heartbeat/HeartbeatEngine";
 import { SkillsEngine } from "../skills/SkillsEngine";
 import { VoiceEngine } from "../voice/VoiceEngine";
 import { CanvasServer } from "../canvas/CanvasServer";
 import { AgentRouter } from "../agents/AgentRouter";
 import { ProviderRegistry } from "../llm/ProviderRegistry";
-import { LLMToolDefinition, LLMMessage } from "../llm/LLMProvider";
+import type { LLMToolDefinition, LLMMessage } from "../llm/LLMProvider";
 import { logger } from "../utils/logger";
 import * as fs from "fs/promises";
 import * as path from "path";
@@ -315,7 +315,7 @@ export class AgentLoop {
         return this.snapshot.capture(input.url as string, input.focus_selector as string | undefined);
       case "browser_action": {
         const result = await this.browser.execute(sessionId, {
-          action: input.action as any,
+          action: input.action as BrowserAction["action"],
           url: input.url as string,
           selector: input.selector as string,
           text: input.text as string,

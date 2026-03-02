@@ -290,7 +290,7 @@ export class DataResidencyManager {
     const now = Date.now();
     let deleted = 0;
 
-    for (const [key, obj] of this.objectIndex) {
+    for (const [, obj] of this.objectIndex) {
       if (obj.expiresAt && new Date(obj.expiresAt).getTime() < now) {
         const ok = await this.deleteData(obj.tenantId, obj.key);
         if (ok) deleted++;

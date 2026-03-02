@@ -9,7 +9,6 @@ import { logger } from "../utils/logger";
 import {
   getDB, loadAllTenants, upsertTenant, deleteTenantRow,
   loadTenantApiKeys, insertTenantApiKey, deleteTenantApiKey,
-  type TenantRow,
 } from "./PersistenceDB";
 
 export interface Tenant {

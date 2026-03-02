@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Clock, Search, RefreshCw, ChevronRight } from "lucide-react";
+import { Activity, Search } from "lucide-react";
 import { useState } from "react";
 import { fetchTraces, fetchMetrics } from "../lib/api";
 
@@ -18,11 +18,12 @@ export default function TracesPage() {
   });
 
   const filteredTraces = (traces || []).filter(
-    (t: any) => !search || t.name?.toLowerCase().includes(search.toLowerCase()),
+    (t) => !search || t.name?.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const counters = (metrics as any)?.counters || {};
-  const histograms = (metrics as any)?.histograms || {};
+  const metricsData = metrics as Record<string, Record<string, unknown>> | undefined;
+  const counters = metricsData?.counters || {};
+  const histograms = metricsData?.histograms || {};
 
   return (
     <div className="p-8 space-y-6">
@@ -66,25 +67,28 @@ export default function TracesPage() {
       {/* Histograms */}
       {Object.keys(histograms).length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {Object.entries(histograms).map(([name, data]: [string, any]) => (
-            <div key={name} className="card">
-              <h4 className="text-sm font-medium text-gray-400 mb-2">{name}</h4>
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <div>
-                  <p className="text-xs text-gray-500">Count</p>
-                  <p className="text-white font-medium">{data.count ?? 0}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Avg</p>
-                  <p className="text-white font-medium">{data.avg ? `${data.avg.toFixed(1)}ms` : "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">P99</p>
-                  <p className="text-white font-medium">{data.p99 ? `${data.p99.toFixed(1)}ms` : "—"}</p>
+          {Object.entries(histograms).map(([name, raw]) => {
+            const data = raw as Record<string, number>;
+            return (
+              <div key={name} className="card">
+                <h4 className="text-sm font-medium text-gray-400 mb-2">{name}</h4>
+                <div className="grid grid-cols-3 gap-2 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Count</p>
+                    <p className="text-white font-medium">{data.count ?? 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Avg</p>
+                    <p className="text-white font-medium">{data.avg ? `${data.avg.toFixed(1)}ms` : "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">P99</p>
+                    <p className="text-white font-medium">{data.p99 ? `${data.p99.toFixed(1)}ms` : "—"}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -132,7 +136,7 @@ export default function TracesPage() {
                     <td className="px-6 py-4"><div className="h-4 bg-gray-800 rounded w-24 animate-pulse" /></td>
                   </tr>
                 ))
-              : filteredTraces.map((trace: any) => (
+              : filteredTraces.map((trace) => (
                   <tr key={trace.id} className="hover:bg-gray-900/50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">

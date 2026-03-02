@@ -4,7 +4,8 @@
  * Full browser automation: navigate, click, type, screenshot, scrape.
  */
 
-import puppeteer, { Browser, Page } from "puppeteer";
+import type { Browser, Page } from "puppeteer";
+import puppeteer from "puppeteer";
 import { logger } from "../utils/logger";
 
 export interface BrowserAction {
@@ -135,11 +136,6 @@ export class BrowserEngine {
         case "extract": {
           // Extract structured content from page
           const content = await page.evaluate(() => {
-            const getText = (sel: string) => {
-              const el = document.querySelector(sel);
-              return el ? el.textContent?.trim() : null;
-            };
-
             const links = Array.from(document.querySelectorAll("a[href]")).slice(0, 20).map((a) => ({
               text: a.textContent?.trim(),
               href: (a as HTMLAnchorElement).href,

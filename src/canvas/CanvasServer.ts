@@ -8,10 +8,10 @@
  *   <input astra-bind="search" astra-submit="onSearch" />
  */
 
-import { createServer, IncomingMessage, ServerResponse } from "http";
+import type { IncomingMessage, ServerResponse } from "http";
+import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { logger } from "../utils/logger";
-import { v4 as uuid } from "uuid";
 
 export interface CanvasState {
   sessionId: string;

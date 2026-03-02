@@ -4,7 +4,7 @@
  * Uses Telnyx Programmable Voice API for inbound/outbound calls.
  */
 
-import { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
+import type { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
 import { logger } from "../utils/logger";
 
 interface CallSession {

@@ -3,7 +3,7 @@
  * Signal messenger adapter via signal-cli REST API
  */
 
-import { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
+import type { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
 
 export class SignalAdapter implements ChannelAdapter {
   name = "signal";

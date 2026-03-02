@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  Bot, MessageSquare, Zap, Clock, Cpu, HardDrive, Users, Activity,
-  ArrowUpRight, Server, Shield,
+  Bot, MessageSquare, Zap, Clock, Cpu, HardDrive, Activity,
+  Server, Shield,
 } from "lucide-react";
 import { fetchStats, fetchHealth, fetchMetrics } from "../lib/api";
 import {

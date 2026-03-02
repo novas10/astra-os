@@ -3,7 +3,7 @@
  * Central registry for LLM providers. Hot-swap between Anthropic, OpenAI, Gemini, and Ollama.
  */
 
-import { LLMProvider, ProviderType } from "./LLMProvider";
+import type { LLMProvider, ProviderType } from "./LLMProvider";
 import { AnthropicProvider } from "./AnthropicProvider";
 import { OpenAIProvider } from "./OpenAIProvider";
 import { GeminiProvider } from "./GeminiProvider";

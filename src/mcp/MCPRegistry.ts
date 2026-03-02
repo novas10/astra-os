@@ -6,8 +6,10 @@
 
 import * as fs from "fs/promises";
 import * as path from "path";
-import { MCPClient, MCPServerConfig, MCPTool } from "./MCPClient";
-import { MCPServer, MCPToolHandler } from "./MCPServer";
+import type { MCPServerConfig, MCPTool } from "./MCPClient";
+import { MCPClient } from "./MCPClient";
+import type { MCPToolHandler } from "./MCPServer";
+import { MCPServer } from "./MCPServer";
 import { logger } from "../utils/logger";
 
 export class MCPRegistry {

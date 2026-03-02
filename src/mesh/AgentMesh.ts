@@ -17,7 +17,8 @@
 import * as dgram from "dgram";
 import * as crypto from "crypto";
 import * as os from "os";
-import { Router, Request, Response } from "express";
+import type { Request, Response } from "express";
+import { Router } from "express";
 import { logger } from "../utils/logger";
 
 // ─── Types ───
@@ -420,7 +421,6 @@ export class AgentMesh {
     };
 
     const buf = Buffer.from(JSON.stringify(reply));
-    const payload = msg.payload as { port: number };
     try {
       this.udpSocket?.send(buf, 0, buf.length, this.broadcastPort, fromIP);
     } catch { /* ok */ }

@@ -4,7 +4,8 @@
  * Supports both stdio and HTTP+SSE transports.
  */
 
-import { createServer, IncomingMessage, ServerResponse } from "http";
+import type { IncomingMessage } from "http";
+import { createServer } from "http";
 import { logger } from "../utils/logger";
 
 export interface MCPToolHandler {

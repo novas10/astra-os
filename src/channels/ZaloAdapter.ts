@@ -4,7 +4,7 @@
  * Uses Zalo Official Account API (OA API v3).
  */
 
-import { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
+import type { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
 import { logger } from "../utils/logger";
 
 export class ZaloAdapter implements ChannelAdapter {

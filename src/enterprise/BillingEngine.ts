@@ -3,7 +3,8 @@
  * Stripe integration for SaaS billing: subscriptions, usage metering, invoices, webhooks.
  */
 
-import { Router, Request, Response } from "express";
+import type { Request, Response } from "express";
+import { Router } from "express";
 import * as crypto from "crypto";
 
 // ─── Types ───
@@ -125,7 +126,7 @@ export class BillingEngine {
 
     const res = await fetch(url, options);
     if (!res.ok) {
-      const errBody = await res.json() as Record<string, any>;
+      const errBody = await res.json() as Record<string, Record<string, string>>;
       throw new Error(`Stripe error: ${errBody.error?.message || res.statusText}`);
     }
     return res.json() as Promise<T>;

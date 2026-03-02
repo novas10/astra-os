@@ -3,7 +3,7 @@
  * Slack channel adapter using Bolt SDK patterns
  */
 
-import { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
+import type { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
 
 export class SlackAdapter implements ChannelAdapter {
   name = "slack";

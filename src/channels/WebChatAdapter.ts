@@ -4,7 +4,7 @@
  * WebSocket-based real-time messaging with typing indicators and message history.
  */
 
-import { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
+import type { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
 import { logger } from "../utils/logger";
 import { WebSocketServer, WebSocket as WS } from "ws";
 import * as crypto from "crypto";

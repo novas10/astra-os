@@ -3,7 +3,7 @@
  * Microsoft Teams channel adapter via Bot Framework
  */
 
-import { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
+import type { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
 
 export class TeamsAdapter implements ChannelAdapter {
   name = "teams";

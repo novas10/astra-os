@@ -3,7 +3,7 @@
  * iMessage adapter via BlueBubbles server API
  */
 
-import { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
+import type { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
 
 export class iMessageAdapter implements ChannelAdapter {
   name = "imessage";

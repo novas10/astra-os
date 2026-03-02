@@ -3,7 +3,7 @@
  * Google Chat (Workspace) adapter via webhook and Bot API
  */
 
-import { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
+import type { ChannelAdapter, IncomingMessage, OutgoingMessage } from "./ChannelAdapter";
 
 export class GoogleChatAdapter implements ChannelAdapter {
   name = "google_chat";

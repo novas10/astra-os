@@ -13,9 +13,9 @@
  * 7. Request origin validation — block untrusted origins
  */
 
-import { Router, Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
+import { Router } from "express";
 import * as crypto from "crypto";
-import * as os from "os";
 import { logger } from "../utils/logger";
 
 interface BruteForceEntry {
@@ -246,7 +246,6 @@ export class GatewayShield {
   }
 
   async checkPublicExposure(): Promise<void> {
-    const port = process.env.PORT || 3000;
     const bindAddress = process.env.HOST || "0.0.0.0";
     const hasAuth = !!(process.env.ASTRA_API_KEYS || process.env.ASTRA_API_KEY);
 

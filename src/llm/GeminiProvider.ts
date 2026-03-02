@@ -3,7 +3,7 @@
  * Google Gemini LLM provider (Gemini 2.5 Pro, Flash, etc.)
  */
 
-import { LLMProvider, LLMResponse, LLMMessage, LLMToolDefinition } from "./LLMProvider";
+import type { LLMProvider, LLMResponse, LLMMessage, LLMToolDefinition } from "./LLMProvider";
 
 export class GeminiProvider implements LLMProvider {
   name = "gemini";

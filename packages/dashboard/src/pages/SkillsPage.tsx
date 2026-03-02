@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  Zap, Search, Plus, ArrowRight, Package, Tag, Clock,
+  Zap, Search, ArrowRight, Tag, Clock,
   Filter, Sparkles, Download,
 } from "lucide-react";
 import { useState } from "react";

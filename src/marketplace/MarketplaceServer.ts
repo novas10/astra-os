@@ -5,7 +5,8 @@
  * The "npm for AI Agent Skills" — rivals ClawHub with better security and discoverability.
  */
 
-import { Router, Request, Response } from "express";
+import type { Request, Response } from "express";
+import { Router } from "express";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as crypto from "crypto";

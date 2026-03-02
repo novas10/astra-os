@@ -8,7 +8,8 @@
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
-import { Router, Request, Response } from "express";
+import type { Request, Response } from "express";
+import { Router } from "express";
 import { logger } from "../utils/logger";
 
 // ---------------------------------------------------------------------------

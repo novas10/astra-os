@@ -19,7 +19,7 @@ import { SkillsEngine } from "../skills/SkillsEngine";
 import { VoiceEngine } from "../voice/VoiceEngine";
 import { CanvasServer } from "../canvas/CanvasServer";
 import { BrowserEngine } from "../tools/BrowserEngine";
-import { HeartbeatEngine } from "../heartbeat/HeartbeatEngine";
+// HeartbeatEngine loaded on demand
 import { ProviderRegistry } from "../llm/ProviderRegistry";
 import { SlackAdapter } from "./SlackAdapter";
 import { TeamsAdapter } from "./TeamsAdapter";
@@ -247,7 +247,7 @@ export class Gateway {
 
     // ─── REST API ───
     this.app.post("/api/chat", async (req, res) => {
-      const { message, sessionId, channel = "api", userId = "anonymous", model } = req.body;
+      const { message, sessionId, channel = "api", userId = "anonymous" } = req.body;
       if (!message || typeof message !== "string") return res.status(400).json({ error: "message is required and must be a string" });
       if (message.length > 100_000) return res.status(400).json({ error: "message exceeds maximum length (100000 chars)" });
       if (sessionId && typeof sessionId !== "string") return res.status(400).json({ error: "sessionId must be a string" });
@@ -501,7 +501,7 @@ export class Gateway {
 
       ws.on("message", async (data) => {
         const parsed = JSON.parse(data.toString());
-        const { message, userId = "ws_user", model } = parsed;
+        const { message, userId = "ws_user" } = parsed;
 
         ws.send(JSON.stringify({ type: "thinking", sessionId }));
 

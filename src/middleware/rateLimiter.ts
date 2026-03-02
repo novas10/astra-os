@@ -3,7 +3,7 @@
  * In-memory sliding window rate limiter. No external dependencies.
  */
 
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 interface RateLimitEntry {
   timestamps: number[];

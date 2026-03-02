@@ -3,7 +3,7 @@
  * Origin-validated CORS with preflight support.
  */
 
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 export function createCorsMiddleware() {
   const raw = process.env.ASTRA_CORS_ORIGINS || "http://localhost:5173";

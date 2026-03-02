@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
-  Settings, Key, Users, Building, Shield, Bell, Palette,
+  Settings, Key, Users, Building, Shield, Bell,
   Globe, Server, Save, CheckCircle,
 } from "lucide-react";
 import { fetchSettings, updateSettings } from "../lib/api";

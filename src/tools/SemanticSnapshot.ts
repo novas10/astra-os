@@ -19,7 +19,7 @@ export class SemanticSnapshot {
     }
   }
 
-  private parseHTMLToSnapshot(html: string, focusSelector?: string): string {
+  private parseHTMLToSnapshot(html: string, _focusSelector?: string): string {
     const lines: string[] = [];
 
     const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/is);

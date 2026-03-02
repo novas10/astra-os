@@ -6,7 +6,7 @@
  * Falls back gracefully when desktop tools are unavailable.
  */
 
-import { BrowserEngine } from "./BrowserEngine";
+import type { BrowserEngine } from "./BrowserEngine";
 import { logger } from "../utils/logger";
 import { execSync } from "child_process";
 import * as os from "os";

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Package, Search, Star, Download, Check, ExternalLink, Loader2 } from "lucide-react";
+import { Package, Search, Star, Download, Check, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { fetchSkills, searchMarketplace, fetchMarketplaceCategories, fetchInstalledMarketplace, installSkill } from "../lib/api";
+import { fetchSkills, searchMarketplace, fetchInstalledMarketplace, installSkill } from "../lib/api";
 
 const FEATURED_SKILLS = [
   { id: "weather-alerts", name: "Weather Alerts", description: "Real-time weather monitoring and severe weather notifications", author: "AstraOS Team", downloads: 12500, rating: 4.8, price: 0, verified: true, category: "productivity" },
@@ -19,7 +19,7 @@ export default function MarketplacePage() {
   const [installingId, setInstallingId] = useState<string | null>(null);
 
   const { data: installedSkills } = useQuery({ queryKey: ["skills"], queryFn: fetchSkills });
-  const { data: installed } = useQuery({ queryKey: ["marketplace-installed"], queryFn: fetchInstalledMarketplace });
+  useQuery({ queryKey: ["marketplace-installed"], queryFn: fetchInstalledMarketplace });
   const { data: searchResults } = useQuery({
     queryKey: ["marketplace-search", search],
     queryFn: () => searchMarketplace(search || "featured"),
@@ -48,9 +48,9 @@ export default function MarketplacePage() {
     { id: "automation", name: "Automation", icon: "repeat" },
   ];
 
-  const filteredSkills = marketplaceSkills.filter((skill: typeof FEATURED_SKILLS[0]) => {
+  const filteredSkills = marketplaceSkills.filter((skill) => {
     const matchesSearch = !search || skill.name.toLowerCase().includes(search.toLowerCase()) || skill.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = !activeCategory || skill.category === activeCategory;
+    const matchesCategory = !activeCategory || ("category" in skill && skill.category === activeCategory);
     return matchesSearch && matchesCategory;
   });
 

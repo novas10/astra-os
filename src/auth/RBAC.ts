@@ -3,10 +3,18 @@
  * Roles, permissions, JWT tokens, and authorization middleware.
  */
 
-import { Request, Response, NextFunction, Router } from "express";
+import type { Request, Response, NextFunction} from "express";
+import { Router } from "express";
 import * as crypto from "crypto";
 import { logger } from "../utils/logger";
-import { getDB, loadAllUsers, upsertUser, deleteUserRow, type UserRow } from "./PersistenceDB";
+import { getDB, loadAllUsers, upsertUser, deleteUserRow } from "./PersistenceDB";
+
+// Augment Express Request to include user
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: AstraUser | null;
+  }
+}
 
 // ─── Roles & Permissions ───
 
@@ -307,7 +315,7 @@ export class RBACManager {
         if (payload) {
           const user = this.users.get(payload.sub);
           if (user && user.active) {
-            (req as any).user = user;
+            req.user = user;
             user.lastLogin = new Date().toISOString();
             return next();
           }
@@ -319,7 +327,7 @@ export class RBACManager {
       if (apiKey) {
         const user = this.getUserByApiKey(apiKey);
         if (user && user.active) {
-          (req as any).user = user;
+          req.user = user;
           user.lastLogin = new Date().toISOString();
           return next();
         }
@@ -329,7 +337,7 @@ export class RBACManager {
       const publicPaths = ["/health", "/webhook/", "/.well-known/", "/docs", "/api/auth/login", "/api/sso/", "/api/chat"];
       const isPublic = publicPaths.some((p) => req.path === p || req.path.startsWith(p));
       if (isPublic) {
-        (req as any).user = null;
+        req.user = null;
         return next();
       }
 
@@ -342,7 +350,7 @@ export class RBACManager {
    */
   requireRole(...roles: Role[]) {
     return (req: Request, res: Response, next: NextFunction): void => {
-      const user = (req as any).user as AstraUser | null;
+      const user = req.user as AstraUser | null;
       if (!user) {
         res.status(401).json({ error: "Authentication required" });
         return;
@@ -360,7 +368,7 @@ export class RBACManager {
    */
   requirePermission(resource: string, action: Permission["actions"][number]) {
     return (req: Request, res: Response, next: NextFunction): void => {
-      const user = (req as any).user as AstraUser | null;
+      const user = req.user as AstraUser | null;
       if (!user) {
         res.status(401).json({ error: "Authentication required" });
         return;
@@ -403,14 +411,14 @@ export class RBACManager {
 
     // Get current user
     router.get("/me", (req: Request, res: Response) => {
-      const user = (req as any).user as AstraUser | null;
+      const user = req.user as AstraUser | null;
       if (!user) return res.status(401).json({ error: "Not authenticated" });
       res.json({ id: user.id, email: user.email, name: user.name, role: user.role, tenantId: user.tenantId });
     });
 
     // List users (admin only)
     router.get("/users", (req: Request, res: Response) => {
-      const user = (req as any).user as AstraUser | null;
+      const user = req.user as AstraUser | null;
       if (!user || user.role !== "admin") return res.status(403).json({ error: "Admin only" });
       const users = this.listUsers(user.tenantId).map((u) => ({
         id: u.id, email: u.email, name: u.name, role: u.role, active: u.active, createdAt: u.createdAt,
@@ -420,7 +428,7 @@ export class RBACManager {
 
     // Create user (admin only)
     router.post("/users", (req: Request, res: Response) => {
-      const reqUser = (req as any).user as AstraUser | null;
+      const reqUser = req.user as AstraUser | null;
       if (!reqUser || reqUser.role !== "admin") return res.status(403).json({ error: "Admin only" });
 
       const { email, name, role } = req.body;
@@ -435,7 +443,7 @@ export class RBACManager {
 
     // Update user role (admin only)
     router.patch("/users/:id", (req: Request, res: Response) => {
-      const reqUser = (req as any).user as AstraUser | null;
+      const reqUser = req.user as AstraUser | null;
       if (!reqUser || reqUser.role !== "admin") return res.status(403).json({ error: "Admin only" });
 
       const updated = this.updateUser(req.params.id, req.body);
@@ -445,7 +453,7 @@ export class RBACManager {
 
     // Delete user (admin only)
     router.delete("/users/:id", (req: Request, res: Response) => {
-      const reqUser = (req as any).user as AstraUser | null;
+      const reqUser = req.user as AstraUser | null;
       if (!reqUser || reqUser.role !== "admin") return res.status(403).json({ error: "Admin only" });
 
       if (req.params.id === reqUser.id) return res.status(400).json({ error: "Cannot delete yourself" });
@@ -455,7 +463,7 @@ export class RBACManager {
 
     // Rotate API key
     router.post("/users/:id/rotate-key", (req: Request, res: Response) => {
-      const reqUser = (req as any).user as AstraUser | null;
+      const reqUser = req.user as AstraUser | null;
       if (!reqUser) return res.status(401).json({ error: "Not authenticated" });
       if (reqUser.role !== "admin" && reqUser.id !== req.params.id) {
         return res.status(403).json({ error: "Can only rotate your own key" });

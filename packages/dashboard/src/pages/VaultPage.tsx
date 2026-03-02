@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   Lock, Plus, Trash2, Search, Key, ShieldCheck, Clock,
-  Eye, EyeOff, Server, AlertTriangle,
+  AlertTriangle,
 } from "lucide-react";
 import { useState } from "react";
 import { fetchVaultStatus, fetchCredentials, fetchVaultAuditLog, addCredential, deleteCredential } from "../lib/api";
