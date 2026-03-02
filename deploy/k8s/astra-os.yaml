@@ -1,0 +1,177 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: astra-os
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: astra-config
+  namespace: astra-os
+data:
+  PORT: "3000"
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+  MEMORY_DIR: ".astra-memory"
+  WORKSPACE_DIR: "workspace"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: astra-secrets
+  namespace: astra-os
+type: Opaque
+stringData:
+  ASTRA_API_KEYS: "CHANGE-ME-IN-PRODUCTION"
+  JWT_SECRET: "CHANGE-ME-IN-PRODUCTION"
+  MASTER_ENCRYPTION_KEY: "CHANGE-ME-IN-PRODUCTION"
+  ANTHROPIC_API_KEY: ""
+  REDIS_PASSWORD: "astra-redis-prod"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: astra-os
+  namespace: astra-os
+  labels:
+    app: astra-os
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: astra-os
+  template:
+    metadata:
+      labels:
+        app: astra-os
+    spec:
+      containers:
+        - name: astra-os
+          image: ghcr.io/novas10/astra-os:latest
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: astra-config
+            - secretRef:
+                name: astra-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          volumeMounts:
+            - name: astra-data
+              mountPath: /app/.astra-data
+            - name: astra-memory
+              mountPath: /app/.astra-memory
+            - name: astra-logs
+              mountPath: /app/logs
+      volumes:
+        - name: astra-data
+          persistentVolumeClaim:
+            claimName: astra-data-pvc
+        - name: astra-memory
+          persistentVolumeClaim:
+            claimName: astra-memory-pvc
+        - name: astra-logs
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: astra-os
+  namespace: astra-os
+spec:
+  selector:
+    app: astra-os
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: astra-os
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--requirepass", "$(REDIS_PASSWORD)"]
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: astra-secrets
+                  key: REDIS_PASSWORD
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 192Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: astra-os
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: astra-data-pvc
+  namespace: astra-os
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: astra-memory-pvc
+  namespace: astra-os
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi

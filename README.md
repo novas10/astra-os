@@ -34,7 +34,7 @@ AstraOS (Sanskrit: *Astra* = divine weapon / celestial tool) is the most secure 
 
 ## Why AstraOS vs OpenClaw
 
-| Capability | OpenClaw | **AstraOS v3.5** |
+| Capability | OpenClaw | **AstraOS v4.0** |
 |-----------|----------|-------------------|
 | **Security Layer** | CVE-2026-25253 (token leak), plaintext credentials, ClawHavoc skill attacks | **GatewayShield** (CVE prevention, CSRF, brute force) + **CredentialVault** (AES-256-GCM) + **SkillSandbox** (Ed25519 signing, quarantine) |
 | **Channels** | ~10 | **14+** (WhatsApp, Telegram, Discord, Slack, Teams, Signal, Matrix, Google Chat, iMessage, Zalo, WebChat, Phone, REST, WebSocket) |
@@ -89,7 +89,7 @@ AstraOS (Sanskrit: *Astra* = divine weapon / celestial tool) is the most secure 
 
 ### Security
 
-AstraOS v3.5 ships three dedicated security subsystems that directly address known vulnerabilities in competing platforms:
+AstraOS v4.0 ships three dedicated security subsystems that directly address known vulnerabilities in competing platforms:
 
 **GatewayShield** — Comprehensive gateway security layer
 - CVE prevention: never accepts auth tokens from URL query params (prevents CVE-2026-25253 class attacks)
@@ -252,7 +252,7 @@ npm run dev
 ```
 
 ```
-AstraOS v3.5 | REST: :3000 | SSE: :3000/api/chat/stream
+AstraOS v4.0 | REST: :3000 | SSE: :3000/api/chat/stream
 Protocols: MCP, A2A | Providers: anthropic, openai, gemini, ollama
 Memory: FTS5 + Vector + GraphRAG | Skills: 55 loaded
 Security: GatewayShield (A+) | CredentialVault | SkillSandbox
@@ -543,7 +543,7 @@ curl -X POST http://localhost:3000/api/skills/generate \
 
 ## Security
 
-AstraOS v3.5 takes a security-first approach with three dedicated subsystems:
+AstraOS v4.0 takes a security-first approach with three dedicated subsystems:
 
 ```
 Request → GatewayShield (CVE/CSRF/brute force/headers/IP)
@@ -687,7 +687,7 @@ MIT
 
 *Where there is Astra, there is victory.*
 
-**AstraOS v3.5** | Security-First | 14+ Channels | 55+ Skills | Talk Mode | Enterprise-Ready
+**AstraOS v4.0** | Security-First | 14+ Channels | 55+ Skills | Talk Mode | Enterprise-Ready
 
 Made in India
 

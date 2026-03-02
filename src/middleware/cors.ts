@@ -12,7 +12,12 @@ export function createCorsMiddleware() {
   return (req: Request, res: Response, next: NextFunction): void => {
     const origin = req.headers.origin;
 
-    if (origin && (allowedOrigins.includes(origin) || allowedOrigins.includes("*"))) {
+    if (allowedOrigins.includes("*") && process.env.NODE_ENV === "production") {
+      console.warn("[CORS] WARNING: Wildcard '*' origin is not allowed in production. Set ASTRA_CORS_ORIGINS explicitly.");
+    }
+
+    const isAllowed = origin && (allowedOrigins.includes(origin) || (allowedOrigins.includes("*") && process.env.NODE_ENV !== "production"));
+    if (isAllowed) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
       res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key");

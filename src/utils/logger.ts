@@ -1,6 +1,6 @@
 /**
  * AstraOS — Logger
- * Structured logging with levels, JSON mode, and correlation IDs.
+ * Structured logging with levels, JSON mode, correlation IDs, and log rotation.
  */
 
 import * as fs from "fs";
@@ -18,9 +18,39 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
 const minLevel: LogLevel = (process.env.LOG_LEVEL as LogLevel) || "info";
 const jsonMode = process.env.LOG_FORMAT === "json";
 
+// ─── Log Rotation Config ───
+const MAX_LOG_SIZE = parseInt(process.env.LOG_MAX_SIZE || "10485760", 10); // 10MB default
+const MAX_LOG_FILES = parseInt(process.env.LOG_MAX_FILES || "5", 10);
+
 const logDir = path.join(process.cwd(), "logs");
 if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
-const logStream = fs.createWriteStream(path.join(logDir, "astra.log"), { flags: "a" });
+
+const logFilePath = path.join(logDir, "astra.log");
+let logStream = fs.createWriteStream(logFilePath, { flags: "a" });
+let currentLogSize = fs.existsSync(logFilePath) ? fs.statSync(logFilePath).size : 0;
+
+function rotateLog(): void {
+  logStream.end();
+
+  // Shift existing rotated files: astra.4.log → astra.5.log, etc.
+  for (let i = MAX_LOG_FILES - 1; i >= 1; i--) {
+    const from = path.join(logDir, `astra.${i}.log`);
+    const to = path.join(logDir, `astra.${i + 1}.log`);
+    if (fs.existsSync(from)) {
+      if (i + 1 >= MAX_LOG_FILES && fs.existsSync(to)) fs.unlinkSync(to);
+      fs.renameSync(from, to);
+    }
+  }
+
+  // Current → astra.1.log
+  if (fs.existsSync(logFilePath)) {
+    fs.renameSync(logFilePath, path.join(logDir, "astra.1.log"));
+  }
+
+  // Open fresh log file
+  logStream = fs.createWriteStream(logFilePath, { flags: "a" });
+  currentLogSize = 0;
+}
 
 // Async-local correlation ID (optional, set by middleware)
 let currentCorrelationId: string | undefined;
@@ -38,22 +68,28 @@ function write(level: LogLevel, msg: string, ...args: unknown[]): void {
 
   const timestamp = new Date().toISOString();
   const extra = args.length > 0 ? " " + args.map(String).join(" ") : "";
+  let line: string;
 
   if (jsonMode) {
-    const entry = JSON.stringify({
+    line = JSON.stringify({
       timestamp,
       level,
       message: msg + extra,
       ...(currentCorrelationId ? { correlationId: currentCorrelationId } : {}),
     });
-    logStream.write(entry + "\n");
-    console.log(entry);
   } else {
     const prefix = currentCorrelationId ? ` [${currentCorrelationId}]` : "";
-    const line = `[${timestamp}] [${level.toUpperCase()}]${prefix} ${msg}${extra}`;
-    logStream.write(line + "\n");
-    console.log(line);
+    line = `[${timestamp}] [${level.toUpperCase()}]${prefix} ${msg}${extra}`;
   }
+
+  const bytes = Buffer.byteLength(line, "utf8") + 1; // +1 for newline
+  if (currentLogSize + bytes > MAX_LOG_SIZE) {
+    rotateLog();
+  }
+
+  logStream.write(line + "\n");
+  currentLogSize += bytes;
+  console.log(line);
 }
 
 export const logger = {
