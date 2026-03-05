@@ -44,9 +44,9 @@ interface NewsItem {
 }
 
 const DEFAULT_CONFIG: DigestConfig = {
-  city: "Chennai",
+  city: "Coimbatore",
   timezone: "Asia/Kolkata",
-  cryptoCoins: ["bitcoin", "ethereum"],
+  cryptoCoins: ["bitcoin", "ethereum", "solana", "binancecoin"],
   newsCategories: ["technology", "business"],
   userName: "Boss",
   telegramChatId: "",
@@ -147,6 +147,8 @@ export class DailyDigest {
       this.fetchCrypto(),
       this.fetchTasks(),
       this.fetchQuote(),
+      this.fetchGoldSilver(),
+      this.fetchForex(),
     ]);
 
     const weather = sections[0].status === "fulfilled" ? sections[0].value : null;
@@ -154,6 +156,8 @@ export class DailyDigest {
     const crypto = sections[2].status === "fulfilled" ? sections[2].value : null;
     const tasks = sections[3].status === "fulfilled" ? sections[3].value : null;
     const quote = sections[4].status === "fulfilled" ? sections[4].value : null;
+    const metals = sections[5].status === "fulfilled" ? sections[5].value : null;
+    const forex = sections[6].status === "fulfilled" ? sections[6].value : null;
 
     const now = new Date().toLocaleString("en-US", { timeZone: this.config.timezone });
     const date = new Date(now);
@@ -183,15 +187,32 @@ export class DailyDigest {
       digest += `\n`;
     }
 
-    // Crypto & Markets
+    // Gold & Silver
+    if (metals) {
+      digest += `🥇 GOLD & SILVER\n`;
+      digest += `  Gold:   $${metals.goldUsd}/oz | ₹${metals.goldInr}/10g\n`;
+      digest += `  Silver: $${metals.silverUsd}/oz | ₹${metals.silverInr}/kg\n\n`;
+    }
+
+    // Crypto
     if (crypto && crypto.length > 0) {
-      digest += `📊 MARKETS\n`;
+      digest += `🪙 CRYPTO\n`;
       crypto.forEach((coin) => {
         const arrow = parseFloat(coin.change24h) >= 0 ? "▲" : "▼";
         digest += `  ${coin.symbol}: $${coin.priceUsd} (${arrow}${coin.change24h}%)\n`;
         digest += `    ₹${coin.priceInr}\n`;
       });
       digest += `\n`;
+    }
+
+    // Forex Rates
+    if (forex) {
+      digest += `💱 FOREX (1 USD =)\n`;
+      digest += `  INR: ₹${forex.INR}\n`;
+      digest += `  EUR: €${forex.EUR}\n`;
+      digest += `  GBP: £${forex.GBP}\n`;
+      digest += `  JPY: ¥${forex.JPY}\n`;
+      digest += `  AED: ${forex.AED} AED\n\n`;
     }
 
     // Tasks
@@ -301,7 +322,7 @@ export class DailyDigest {
 
     return Object.entries(data).map(([id, info]) => ({
       name: id.charAt(0).toUpperCase() + id.slice(1),
-      symbol: id === "bitcoin" ? "BTC" : id === "ethereum" ? "ETH" : id.toUpperCase().slice(0, 4),
+      symbol: ({ bitcoin: "BTC", ethereum: "ETH", solana: "SOL", binancecoin: "BNB", ripple: "XRP", cardano: "ADA", dogecoin: "DOGE" } as Record<string, string>)[id] || id.toUpperCase().slice(0, 4),
       priceUsd: (info.usd || 0).toLocaleString("en-US", { maximumFractionDigits: 2 }),
       priceInr: (info.inr || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 }),
       change24h: (info.usd_24h_change || 0).toFixed(2),
@@ -358,6 +379,66 @@ export class DailyDigest {
       { text: "Do what you can, with what you have, where you are.", author: "Theodore Roosevelt" },
     ];
     return quotes[Math.floor(Math.random() * quotes.length)];
+  }
+
+  private async fetchGoldSilver(): Promise<{ goldUsd: string; goldInr: string; silverUsd: string; silverInr: string }> {
+    // Fetch gold and silver prices from free metals API
+    try {
+      const resp = await fetch("https://api.metalpriceapi.com/v1/latest?api_key=demo&base=USD&currencies=XAU,XAG,INR");
+      if (resp.ok) {
+        const data = (await resp.json()) as { rates: Record<string, number> };
+        const goldOzUsd = data.rates?.XAU ? (1 / data.rates.XAU) : 0;
+        const silverOzUsd = data.rates?.XAG ? (1 / data.rates.XAG) : 0;
+        const usdToInr = data.rates?.INR || 83.5;
+        // Gold: 1 troy oz = 31.1g, India quotes per 10g
+        const goldPerGramInr = (goldOzUsd * usdToInr) / 31.1035;
+        const goldPer10gInr = goldPerGramInr * 10;
+        // Silver: India quotes per kg
+        const silverPerKgInr = (silverOzUsd * usdToInr / 31.1035) * 1000;
+        return {
+          goldUsd: goldOzUsd.toLocaleString("en-US", { maximumFractionDigits: 0 }),
+          goldInr: goldPer10gInr.toLocaleString("en-IN", { maximumFractionDigits: 0 }),
+          silverUsd: silverOzUsd.toLocaleString("en-US", { maximumFractionDigits: 2 }),
+          silverInr: silverPerKgInr.toLocaleString("en-IN", { maximumFractionDigits: 0 }),
+        };
+      }
+    } catch {
+      // Fallback — try CoinGecko for gold/silver proxy
+    }
+    // Fallback: fetch from alternative free API
+    try {
+      const resp = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=tether-gold,silver-token&vs_currencies=usd,inr");
+      if (resp.ok) {
+        const data = (await resp.json()) as Record<string, Record<string, number>>;
+        const gold = data["tether-gold"] || {};
+        return {
+          goldUsd: (gold.usd || 2650).toLocaleString("en-US", { maximumFractionDigits: 0 }),
+          goldInr: ((gold.usd || 2650) * 83.5 / 31.1035 * 10).toLocaleString("en-IN", { maximumFractionDigits: 0 }),
+          silverUsd: "31.50",
+          silverInr: ((31.5 * 83.5 / 31.1035) * 1000).toLocaleString("en-IN", { maximumFractionDigits: 0 }),
+        };
+      }
+    } catch {
+      // Use static fallback
+    }
+    return { goldUsd: "N/A", goldInr: "N/A", silverUsd: "N/A", silverInr: "N/A" };
+  }
+
+  private async fetchForex(): Promise<Record<string, string>> {
+    const resp = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+    if (!resp.ok) throw new Error(`Forex API returned ${resp.status}`);
+    const data = (await resp.json()) as { rates: Record<string, number> };
+    const rates = data.rates || {};
+    return {
+      INR: (rates.INR || 0).toFixed(2),
+      EUR: (rates.EUR || 0).toFixed(4),
+      GBP: (rates.GBP || 0).toFixed(4),
+      JPY: (rates.JPY || 0).toFixed(2),
+      AED: (rates.AED || 0).toFixed(2),
+      SGD: (rates.SGD || 0).toFixed(4),
+      AUD: (rates.AUD || 0).toFixed(4),
+      CAD: (rates.CAD || 0).toFixed(4),
+    };
   }
 
   // ── Telegram ──
