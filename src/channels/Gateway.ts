@@ -56,6 +56,7 @@ import { createSwaggerRouter } from "../docs/swagger";
 import { createCorsMiddleware } from "../middleware/cors";
 import { createRequestLogger } from "../middleware/requestLogger";
 import { globalErrorHandler, sanitizeError } from "../middleware/errorHandler";
+import { DailyDigest } from "../services/DailyDigest";
 
 export class Gateway {
   private port: number;
@@ -85,6 +86,7 @@ export class Gateway {
   private skillMigrator: SkillMigrator;
   private workflowEngine: WorkflowEngine;
   private memoryEngine: MemoryEngine;
+  private dailyDigest: DailyDigest;
 
   // Channel adapters
   private slackAdapter: SlackAdapter;
@@ -154,6 +156,7 @@ export class Gateway {
     this.skillMigrator = new SkillMigrator();
     this.workflowEngine = new WorkflowEngine();
     this.memoryEngine = new MemoryEngine("system");
+    this.dailyDigest = new DailyDigest();
 
     // Initialize channel adapters
     this.slackAdapter = new SlackAdapter();
@@ -249,6 +252,9 @@ export class Gateway {
     if (process.env.TELEGRAM_BOT_TOKEN) {
       await this.registerTelegramWebhook();
     }
+
+    // Start Daily Digest scheduler
+    this.dailyDigest.start();
 
     // ─── REST API ───
     this.app.post("/api/chat", async (req, res) => {
@@ -352,7 +358,7 @@ export class Gateway {
 
         // Handle /help command
         if (message.text === "/help") {
-          await this.tgSend(chatId, "*AstraOS Commands*\n\n/start \\- Welcome message\n/help \\- Show this help\n/skills \\- List available skills\n/voice \\- Toggle voice replies\n\nOr just send me any message or voice note\\!");
+          await this.tgSend(chatId, "*AstraOS Commands*\n\n/start \\- Welcome message\n/help \\- Show this help\n/skills \\- List available skills\n/digest \\- Get your daily briefing now\n/digest\\_setup \\- Configure daily auto\\-send\n\nOr just send me any message or voice note\\!");
           return;
         }
 
@@ -361,6 +367,45 @@ export class Gateway {
           const skillList = this.skills.listSkills().filter(s => s.enabled).slice(0, 20);
           const skillText = skillList.map(s => `• *${s.name}* \\- ${(s.description || "").replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&")}`).join("\n");
           await this.tgSend(chatId, `*Available Skills \\(${skillList.length}\\)*\n\n${skillText}`);
+          return;
+        }
+
+        // Handle /digest command — send digest now
+        if (message.text === "/digest") {
+          await this.tgApi("sendChatAction", { chat_id: chatId, action: "typing" });
+          try {
+            // Auto-register chat ID for future digests
+            const cfg = this.dailyDigest.getConfig();
+            if (!cfg.telegramChatId) {
+              this.dailyDigest.saveConfig({ telegramChatId: chatId, userName: username });
+              this.dailyDigest.start();
+            }
+            const digest = await this.dailyDigest.compileAndSend();
+            // compileAndSend already sends to Telegram, but if chatId wasn't saved yet, send manually
+            if (!cfg.telegramChatId) {
+              await this.tgApi("sendMessage", { chat_id: chatId, text: digest });
+            }
+          } catch (err) {
+            await this.tgSend(chatId, "Failed to compile digest\\. Please try again later\\.");
+            logger.error(`[Telegram] Digest error: ${(err as Error).message}`);
+          }
+          return;
+        }
+
+        // Handle /digest_setup command — configure digest
+        if (message.text?.startsWith("/digest_setup")) {
+          const parts = message.text.split(" ").slice(1);
+          const updates: Record<string, unknown> = { telegramChatId: chatId, userName: username };
+          for (const part of parts) {
+            const [key, val] = part.split("=");
+            if (key === "city") updates.city = val;
+            if (key === "time") updates.digestTime = val;
+          }
+          this.dailyDigest.saveConfig(updates);
+          this.dailyDigest.stop();
+          this.dailyDigest.start();
+          const cfg = this.dailyDigest.getConfig();
+          await this.tgSend(chatId, `Daily digest configured\\!\n\nCity: ${cfg.city}\nTime: ${cfg.digestTime}\nAuto\\-send: Enabled\n\nUse /digest to get your briefing now\\.`);
           return;
         }
 
@@ -458,6 +503,27 @@ export class Gateway {
     this.app.post("/webhook/heartbeat/:taskId", async (req, res) => {
       res.sendStatus(200);
       logger.info(`[Gateway] Heartbeat webhook fired for task: ${req.params.taskId}`);
+    });
+
+    // ─── Daily Digest API ───
+    this.app.get("/api/digest", async (_, res) => {
+      try {
+        const digest = await this.dailyDigest.compileAndSend();
+        res.json({ success: true, digest });
+      } catch (err) {
+        res.status(500).json({ error: (err as Error).message });
+      }
+    });
+
+    this.app.get("/api/digest/config", (_, res) => {
+      res.json(this.dailyDigest.getConfig());
+    });
+
+    this.app.put("/api/digest/config", (req, res) => {
+      this.dailyDigest.saveConfig(req.body);
+      this.dailyDigest.stop();
+      this.dailyDigest.start();
+      res.json({ success: true, config: this.dailyDigest.getConfig() });
     });
 
     // ─── Voice Endpoint ───
