@@ -91,6 +91,7 @@ if (Test-Path $ef) {
 
 # Step 5: Install backend dependencies
 Write-Step -step "5/8" -msg "Installing backend dependencies"
+$ErrorActionPreference = "Continue"
 npm install --legacy-peer-deps 2>&1 | Out-Null
 if ($LASTEXITCODE -eq 0) {
     Write-Ok -msg "Backend dependencies installed"
@@ -103,11 +104,13 @@ if ($LASTEXITCODE -eq 0) {
         exit 1
     }
 }
+$ErrorActionPreference = "Stop"
 
 # Step 6: Install dashboard dependencies
 Write-Step -step "6/8" -msg "Installing dashboard dependencies"
 $dashDir = Join-Path $PSScriptRoot "packages\dashboard"
 Push-Location $dashDir
+$ErrorActionPreference = "Continue"
 npm install --legacy-peer-deps 2>&1 | Out-Null
 if ($LASTEXITCODE -eq 0) {
     Write-Ok -msg "Dashboard dependencies installed"
@@ -115,10 +118,12 @@ if ($LASTEXITCODE -eq 0) {
     npm install 2>&1 | Out-Null
     Write-Ok -msg "Dashboard dependencies installed"
 }
+$ErrorActionPreference = "Stop"
 Pop-Location
 
 # Step 7: Build project
 Write-Step -step "7/8" -msg "Building AstraOS"
+$ErrorActionPreference = "Continue"
 Write-Host "  Building backend..." -ForegroundColor Gray
 npm run build 2>&1 | Out-Null
 if ($LASTEXITCODE -eq 0) {
@@ -134,6 +139,8 @@ if ($LASTEXITCODE -eq 0) {
 } else {
     Write-Warn -msg "Dashboard build had issues"
 }
+
+$ErrorActionPreference = "Stop"
 
 # Step 8: Start services
 Write-Step -step "8/8" -msg "Starting AstraOS"
