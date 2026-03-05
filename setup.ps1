@@ -75,7 +75,7 @@ if (Test-Command "git") {
 }
 
 # ── Step 3: Check Docker (optional) ──
-Write-Step "3/8" "Checking Docker (optional - for Redis)"
+Write-Step "3/8" "Checking Docker - optional for Redis"
 $hasDocker = Test-Command "docker"
 if ($hasDocker) {
     $dockerVer = (docker --version)
@@ -83,7 +83,7 @@ if ($hasDocker) {
 } else {
     Write-Warn "Docker not found. Redis will not start via docker compose."
     Write-Warn "You can install Docker Desktop later or run Redis manually."
-    Write-Warn "AstraOS will still work without Redis (uses in-memory fallback)."
+    Write-Warn "AstraOS will still work without Redis. It uses in-memory fallback."
 }
 
 # ── Step 4: Setup .env ──
@@ -92,7 +92,7 @@ $envFile = Join-Path $PSScriptRoot ".env"
 $envExample = Join-Path $PSScriptRoot ".env.example"
 
 if (Test-Path $envFile) {
-    Write-Ok ".env already exists (keeping your existing config)"
+    Write-Ok ".env already exists - keeping your existing config"
 } elseif (Test-Path $envExample) {
     Copy-Item $envExample $envFile
     Write-Ok ".env created from .env.example"
@@ -151,7 +151,7 @@ npm run build 2>&1 | Out-Null
 if ($LASTEXITCODE -eq 0) {
     Write-Ok "Backend built successfully"
 } else {
-    Write-Warn "Backend build had issues (may still work in dev mode)"
+    Write-Warn "Backend build had issues - may still work in dev mode"
 }
 
 Write-Host "  Building dashboard..." -ForegroundColor Gray
@@ -172,7 +172,7 @@ if ($hasDocker) {
     if ($LASTEXITCODE -eq 0) {
         Write-Ok "Docker services started"
     } else {
-        Write-Warn "Docker services failed to start (AstraOS will use fallbacks)"
+        Write-Warn "Docker services failed to start - AstraOS will use fallbacks"
     }
 }
 
