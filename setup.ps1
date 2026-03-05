@@ -75,15 +75,15 @@ if (Test-Command "git") {
 }
 
 # ── Step 3: Check Docker (optional) ──
-Write-Step "3/8" "Checking Docker (optional, for Redis)..."
+Write-Step "3/8" "Checking Docker (optional - for Redis)"
 $hasDocker = Test-Command "docker"
 if ($hasDocker) {
     $dockerVer = (docker --version)
     Write-Ok "$dockerVer found"
 } else {
-    Write-Warn "Docker not found — Redis will not start via docker compose"
-    Write-Warn "You can install Docker Desktop later or run Redis manually"
-    Write-Warn "AstraOS will still work without Redis (uses in-memory fallback)"
+    Write-Warn "Docker not found. Redis will not start via docker compose."
+    Write-Warn "You can install Docker Desktop later or run Redis manually."
+    Write-Warn "AstraOS will still work without Redis (uses in-memory fallback)."
 }
 
 # ── Step 4: Setup .env ──
@@ -202,5 +202,5 @@ if ($envContent -match 'ANTHROPIC_API_KEY=sk-ant-\.\.\.') {
     Write-Host "  Run: notepad .env" -ForegroundColor Yellow
 }
 
-Write-Host "  Run 'npm start' to launch AstraOS!" -ForegroundColor Cyan
+Write-Host "  Run npm start to launch AstraOS!" -ForegroundColor Cyan
 Write-Host ""
