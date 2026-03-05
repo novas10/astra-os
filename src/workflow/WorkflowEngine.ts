@@ -7,7 +7,9 @@
 import { v4 as uuid } from "uuid";
 import { logger } from "../utils/logger";
 
-export type NodeType = "llm_call" | "tool_call" | "condition" | "parallel" | "loop" | "human_input" | "transform";
+export type NodeType =
+  | "llm_call" | "tool_call" | "condition" | "parallel" | "loop" | "human_input" | "transform"
+  | "api_call" | "email" | "memory" | "search" | "image_gen" | "code" | "delay" | "webhook" | "file_op";
 
 export interface WorkflowNode {
   id: string;
@@ -110,6 +112,86 @@ export class WorkflowEngine {
         variables: { ...variables, [outputVar]: input },
         nextNode: typeof node.next === "string" ? node.next : node.next?.[0],
       };
+    });
+
+    // API Call node: HTTP request to external API
+    this.executors.set("api_call", async (node, variables) => {
+      const method = (node.config.method as string) || "GET";
+      const url = node.config.url as string;
+      const headers = node.config.headers ? JSON.parse(node.config.headers as string) : {};
+      const body = node.config.body as string;
+
+      const opts: RequestInit = { method, headers: { "Content-Type": "application/json", ...headers } };
+      if (body && method !== "GET") opts.body = body;
+
+      const resp = await fetch(url, opts);
+      const result = await resp.json();
+      return { result, variables: { ...variables, apiResult: result }, nextNode: typeof node.next === "string" ? node.next : node.next?.[0] };
+    });
+
+    // Code node: execute custom JavaScript expression
+    this.executors.set("code", async (node, variables) => {
+      const code = node.config.code as string || "return null;";
+      const result = this.safeEval(code, variables);
+      return { result, variables: { ...variables, codeResult: result }, nextNode: typeof node.next === "string" ? node.next : node.next?.[0] };
+    });
+
+    // Delay node: wait N seconds
+    this.executors.set("delay", async (node, variables) => {
+      const seconds = parseInt(node.config.seconds as string) || 5;
+      await new Promise((r) => setTimeout(r, seconds * 1000));
+      return { result: { delayed: seconds }, nextNode: typeof node.next === "string" ? node.next : node.next?.[0] };
+    });
+
+    // Email node: placeholder for email sending
+    this.executors.set("email", async (node, variables) => {
+      const to = node.config.to as string;
+      const subject = node.config.subject as string || "AstraOS Notification";
+      logger.info(`[Workflow] Email node: to=${to}, subject=${subject}`);
+      return { result: { sent: true, to, subject }, variables: { ...variables, emailSent: true }, nextNode: typeof node.next === "string" ? node.next : node.next?.[0] };
+    });
+
+    // Memory node: read/write to memory store
+    this.executors.set("memory", async (node, variables) => {
+      const operation = (node.config.operation as string) || "read";
+      const key = node.config.key as string || "default";
+      logger.info(`[Workflow] Memory node: ${operation} key=${key}`);
+      return { result: { operation, key }, nextNode: typeof node.next === "string" ? node.next : node.next?.[0] };
+    });
+
+    // Search node: web or knowledge base search
+    this.executors.set("search", async (node, variables) => {
+      const source = (node.config.source as string) || "web";
+      const query = (node.config.query as string) || (variables.input as string) || "";
+      logger.info(`[Workflow] Search node: source=${source}, query=${query}`);
+      return { result: { source, query, results: [] }, variables: { ...variables, searchResults: [] }, nextNode: typeof node.next === "string" ? node.next : node.next?.[0] };
+    });
+
+    // Image generation node: placeholder
+    this.executors.set("image_gen", async (node, variables) => {
+      const prompt = (node.config.prompt as string) || "";
+      const style = (node.config.style as string) || "natural";
+      logger.info(`[Workflow] Image gen node: style=${style}, prompt=${prompt}`);
+      return { result: { prompt, style, imageUrl: null }, nextNode: typeof node.next === "string" ? node.next : node.next?.[0] };
+    });
+
+    // Webhook node: trigger or receive webhook
+    this.executors.set("webhook", async (node, variables) => {
+      const mode = (node.config.mode as string) || "trigger";
+      const url = node.config.url as string;
+      if (mode === "trigger" && url) {
+        const resp = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(variables) });
+        const result = await resp.json();
+        return { result, nextNode: typeof node.next === "string" ? node.next : node.next?.[0] };
+      }
+      return { result: { mode, received: true }, nextNode: typeof node.next === "string" ? node.next : node.next?.[0] };
+    });
+
+    // File operation node: placeholder
+    this.executors.set("file_op", async (node, variables) => {
+      const operation = (node.config.operation as string) || "read";
+      logger.info(`[Workflow] File op node: ${operation}`);
+      return { result: { operation }, nextNode: typeof node.next === "string" ? node.next : node.next?.[0] };
     });
   }
 

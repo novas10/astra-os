@@ -1,4 +1,5 @@
 # AstraOS v4.0 - One-Click Windows Setup Script
+# Tip: For an interactive wizard, run: npx astra-os
 
 $ErrorActionPreference = "Stop"
 
@@ -13,10 +14,11 @@ Write-Host ""
 Write-Host "  =========================================" -ForegroundColor Magenta
 Write-Host "       AstraOS v4.0 Setup Installer        " -ForegroundColor Magenta
 Write-Host "  =========================================" -ForegroundColor Magenta
+Write-Host "  Tip: For interactive wizard: npx astra-os" -ForegroundColor DarkGray
 Write-Host ""
 
 # Step 1: Check Node.js
-Write-Step -step "1/8" -msg "Checking Node.js"
+Write-Step -step "1/7" -msg "Checking Node.js"
 if (Test-Command -cmd "node") {
     $nv = node -v
     Write-Ok -msg "Node.js $nv found"
@@ -34,7 +36,7 @@ if (Test-Command -cmd "node") {
 }
 
 # Step 2: Check Git
-Write-Step -step "2/8" -msg "Checking Git"
+Write-Step -step "2/7" -msg "Checking Git"
 if (Test-Command -cmd "git") {
     $gv = git --version
     Write-Ok -msg "$gv found"
@@ -50,19 +52,8 @@ if (Test-Command -cmd "git") {
     }
 }
 
-# Step 3: Check Docker
-Write-Step -step "3/8" -msg "Checking Docker"
-$dockerOk = Test-Command -cmd "docker"
-if ($dockerOk) {
-    $dv = docker --version
-    Write-Ok -msg "$dv found"
-} else {
-    Write-Warn -msg "Docker not found. Redis will not start via docker compose."
-    Write-Warn -msg "AstraOS will still work without Redis."
-}
-
-# Step 4: Setup .env
-Write-Step -step "4/8" -msg "Setting up environment config"
+# Step 3: Setup .env
+Write-Step -step "3/7" -msg "Setting up environment config"
 $ef = Join-Path $PSScriptRoot ".env"
 $ex = Join-Path $PSScriptRoot ".env.example"
 
@@ -89,8 +80,8 @@ if (Test-Path $ef) {
     exit 1
 }
 
-# Step 5: Install backend dependencies
-Write-Step -step "5/8" -msg "Installing backend dependencies"
+# Step 4: Install backend dependencies
+Write-Step -step "4/7" -msg "Installing backend dependencies"
 $ErrorActionPreference = "Continue"
 npm install --legacy-peer-deps 2>&1 | Out-Null
 if ($LASTEXITCODE -eq 0) {
@@ -106,8 +97,8 @@ if ($LASTEXITCODE -eq 0) {
 }
 $ErrorActionPreference = "Stop"
 
-# Step 6: Install dashboard dependencies
-Write-Step -step "6/8" -msg "Installing dashboard dependencies"
+# Step 5: Install dashboard dependencies
+Write-Step -step "5/7" -msg "Installing dashboard dependencies"
 $dashDir = Join-Path $PSScriptRoot "packages\dashboard"
 Push-Location $dashDir
 $ErrorActionPreference = "Continue"
@@ -121,8 +112,8 @@ if ($LASTEXITCODE -eq 0) {
 $ErrorActionPreference = "Stop"
 Pop-Location
 
-# Step 7: Build project
-Write-Step -step "7/8" -msg "Building AstraOS"
+# Step 6: Build project
+Write-Step -step "6/7" -msg "Building AstraOS"
 $ErrorActionPreference = "Continue"
 Write-Host "  Building backend..." -ForegroundColor Gray
 npm run build 2>&1 | Out-Null
@@ -142,39 +133,44 @@ if ($LASTEXITCODE -eq 0) {
 
 $ErrorActionPreference = "Stop"
 
-# Step 8: Start services
-Write-Step -step "8/8" -msg "Starting AstraOS"
-if ($dockerOk) {
-    Write-Host "  Starting Redis via Docker..." -ForegroundColor Gray
-    docker compose up -d 2>&1 | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Ok -msg "Docker services started"
-    } else {
-        Write-Warn -msg "Docker services failed to start - AstraOS will use fallbacks"
-    }
+# Copy dashboard build to public/ for production serving
+$dashDist = Join-Path $dashDir "dist"
+$publicDir = Join-Path $PSScriptRoot "public"
+if (Test-Path $dashDist) {
+    Copy-Item -Recurse -Force "$dashDist\*" $publicDir
+    Write-Ok -msg "Dashboard built and copied to public/"
 }
 
-# Done
+$ErrorActionPreference = "Stop"
+
+# Step 7: Done!
+Write-Step -step "7/7" -msg "Setup Complete!"
+
 Write-Host ""
 Write-Host "  =========================================" -ForegroundColor Green
-Write-Host "       AstraOS v4.0 Setup Complete!        " -ForegroundColor Green
+Write-Host "       AstraOS v4.0 is ready!              " -ForegroundColor Green
 Write-Host "  =========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "  To start AstraOS:" -ForegroundColor White
-Write-Host "    npm start        - production" -ForegroundColor White
-Write-Host "    npm run dev      - development with reload" -ForegroundColor White
+Write-Host "  Start AstraOS:" -ForegroundColor Cyan
+Write-Host "    npm start         - production" -ForegroundColor White
+Write-Host "    npm run dev       - development with reload" -ForegroundColor White
 Write-Host ""
-Write-Host "  Dashboard:" -ForegroundColor White
-Write-Host "    npm run dashboard:dev" -ForegroundColor White
+Write-Host "  Open in browser:" -ForegroundColor Cyan
+Write-Host "    Dashboard : http://localhost:3000" -ForegroundColor White
+Write-Host "    API Docs  : http://localhost:3000/docs" -ForegroundColor White
+Write-Host "    Health    : http://localhost:3000/health" -ForegroundColor White
 Write-Host ""
-Write-Host "  Open in browser:" -ForegroundColor White
-Write-Host "    http://localhost:3000" -ForegroundColor White
+Write-Host "  Cloud Deploy:" -ForegroundColor Cyan
+Write-Host "    Railway : railway init && railway up" -ForegroundColor DarkGray
+Write-Host "    Render  : Push to GitHub, connect on render.com" -ForegroundColor DarkGray
+Write-Host "    Docker  : docker compose up -d" -ForegroundColor DarkGray
 Write-Host ""
 
 $ec = Get-Content $ef -Raw
 if ($ec -match "ANTHROPIC_API_KEY=sk-ant-\.\.\.") {
     Write-Warn -msg "Add your ANTHROPIC_API_KEY in .env before starting!"
     Write-Host "  Run: notepad .env" -ForegroundColor Yellow
+    Write-Host ""
 }
 
 Write-Host "  Run 'npm start' to launch AstraOS!" -ForegroundColor Cyan

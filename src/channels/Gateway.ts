@@ -11,6 +11,7 @@
  */
 
 import express from "express";
+import path from "path";
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
 import { AgentLoop } from "../core/AgentLoop";
@@ -47,6 +48,7 @@ import { DataResidencyManager } from "../enterprise/DataResidency";
 import { EdgeRuntime } from "../edge/EdgeRuntime";
 import { GatewayShield } from "../security/GatewayShield";
 import { CredentialVault } from "../security/CredentialVault";
+import { CloudManager } from "../cloud/CloudManager";
 import { SkillSandbox } from "../security/SkillSandbox";
 import { SkillGenerator } from "../skills/SkillGenerator";
 import { WorkflowEngine } from "../workflow/WorkflowEngine";
@@ -75,6 +77,7 @@ export class Gateway {
   private rbac: RBACManager;
   private tenants: TenantManager;
   private billing: BillingEngine;
+  private cloudManager: CloudManager;
   private auditLog: AuditLog;
   private sso: SSOManager;
   private dataResidency: DataResidencyManager;
@@ -145,6 +148,7 @@ export class Gateway {
     this.rbac = new RBACManager();
     this.tenants = new TenantManager();
     this.billing = new BillingEngine();
+    this.cloudManager = new CloudManager();
     this.auditLog = new AuditLog();
     this.sso = new SSOManager();
     this.dataResidency = new DataResidencyManager();
@@ -234,6 +238,7 @@ export class Gateway {
     await this.auditLog.initialize();
     await this.dataResidency.initialize();
     await this.edgeRuntime.initialize();
+    await this.cloudManager.initialize();
 
     // Create default agent
     this.agentRouter.createAgent({
@@ -759,6 +764,10 @@ export class Gateway {
     // ─── Billing ───
     this.app.use("/api/billing", this.billing.getRouter());
 
+    // ─── AstraCloud ───
+    this.app.use("/api/cloud", this.cloudManager.getRouter());
+    this.app.use("/cloud", this.cloudManager.getRouter());
+
     // ─── Enterprise: Audit Log ───
     this.app.use("/api/admin/audit", this.rbac.requireRole("admin"), this.auditLog.getRouter());
 
@@ -924,6 +933,15 @@ export class Gateway {
       });
     });
 
+    // ─── Serve Dashboard (production) ───
+    const publicDir = path.join(process.cwd(), "public");
+    this.app.use(express.static(publicDir));
+    this.app.get("*", (_req, res) => {
+      res.sendFile(path.join(publicDir, "index.html"), (err) => {
+        if (err) res.status(404).json({ error: "Not found" });
+      });
+    });
+
     // ─── Global Error Handler (MUST be last middleware) ───
     this.app.use(globalErrorHandler);
 
@@ -942,7 +960,8 @@ export class Gateway {
   ║  A2A Agent    : http://localhost:${this.port}/.well-known/agent.json    ║
   ║  Health       : http://localhost:${this.port}/health                    ║
   ║  API Docs     : http://localhost:${this.port}/docs                     ║
-  ║  Dashboard    : http://localhost:5173                            ║
+  ║  Dashboard    : http://localhost:${String(this.port).padEnd(37)}║
+  ║  AstraCloud   : http://localhost:${this.port}/cloud                   ║
   ╠══════════════════════════════════════════════════════════════╣
   ║  Channels   : ${this.getActiveChannels().join(", ").padEnd(44)}║
   ║  Providers  : ${this.providers.listProviders().join(", ").padEnd(44)}║

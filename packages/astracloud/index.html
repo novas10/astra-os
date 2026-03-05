@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstraCloud — Managed AstraOS Hosting | Your AI Agent, Always On</title>
+  <meta name="description" content="Deploy your own AstraOS AI agent in 60 seconds. Managed hosting with auto-updates, daily backups, and enterprise security. Starting at $15/mo.">
+  <meta name="keywords" content="AI agent hosting, AstraOS cloud, managed AI, autonomous agent, LLM hosting">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #06060b; --bg2: #0d0d14; --bg3: #14141f;
+      --surface: rgba(255,255,255,0.03); --surface2: rgba(255,255,255,0.06);
+      --text: #f0f0f5; --text2: #8888a0; --text3: #55556a;
+      --accent: #7c3aed; --accent2: #a78bfa; --accent3: #c4b5fd;
+      --green: #10b981; --green2: #34d399; --blue: #3b82f6; --pink: #ec4899;
+      --border: rgba(255,255,255,0.06); --border2: rgba(255,255,255,0.1);
+      --glow: rgba(124,58,237,0.15); --glow2: rgba(124,58,237,0.4);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.6; overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent2); text-decoration: none; transition: color 0.2s; }
+    a:hover { color: var(--accent3); }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+
+    /* ─── Particle Canvas ─── */
+    #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+    /* ─── Nav ─── */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 100;
+      background: rgba(6,6,11,0.8); backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid var(--border); padding: 0 2rem; height: 64px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .nav-brand { font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; }
+    .nav-brand .logo {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--pink));
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .nav-brand span { background: linear-gradient(135deg, var(--accent2), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a { color: var(--text2); font-size: 0.85rem; font-weight: 500; letter-spacing: 0.02em; }
+    .nav-links a:hover { color: var(--text); }
+    .btn-nav {
+      background: linear-gradient(135deg, var(--accent), #9333ea);
+      color: white; padding: 0.5rem 1.5rem; border-radius: 10px;
+      font-weight: 600; font-size: 0.85rem; border: none; cursor: pointer;
+      transition: all 0.3s; box-shadow: 0 2px 20px var(--glow);
+    }
+    .btn-nav:hover { transform: translateY(-1px); box-shadow: 0 4px 30px var(--glow2); }
+
+    /* ─── Hero ─── */
+    .hero { padding: 10rem 2rem 6rem; text-align: center; position: relative; }
+    .hero-glow {
+      position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 500px;
+      background: radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, rgba(236,72,153,0.06) 40%, transparent 70%);
+      filter: blur(60px); pointer-events: none;
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 850px; margin: 0 auto; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 1.2rem; background: var(--surface2);
+      border: 1px solid var(--border2); border-radius: 100px;
+      font-size: 0.8rem; color: var(--accent2); margin-bottom: 2rem;
+      animation: fadeInDown 0.8s ease;
+    }
+    .hero-badge .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 2s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .hero h1 {
+      font-size: 4.2rem; font-weight: 900; line-height: 1.05; letter-spacing: -0.03em;
+      margin-bottom: 1.5rem; animation: fadeInUp 0.8s ease 0.1s both;
+    }
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, #fff 0%, var(--accent2) 50%, var(--pink) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero .sub {
+      font-size: 1.15rem; color: var(--text2); max-width: 580px;
+      margin: 0 auto 2.5rem; line-height: 1.7; font-weight: 400;
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; animation: fadeInUp 0.8s ease 0.3s both; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #9333ea);
+      color: white; padding: 0.9rem 2.2rem; border-radius: 12px;
+      font-weight: 700; font-size: 1rem; border: none; cursor: pointer;
+      transition: all 0.3s; box-shadow: 0 4px 30px var(--glow);
+      display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 40px var(--glow2); }
+    .btn-secondary {
+      background: var(--surface2); color: var(--text); padding: 0.9rem 2.2rem;
+      border-radius: 12px; font-weight: 600; font-size: 1rem;
+      border: 1px solid var(--border2); cursor: pointer; transition: all 0.3s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); background: rgba(124,58,237,0.08); }
+
+    /* ─── Animated Terminal ─── */
+    .terminal-wrap {
+      max-width: 700px; margin: 4rem auto 0; animation: fadeInUp 0.8s ease 0.4s both;
+      border-radius: 16px; overflow: hidden; border: 1px solid var(--border2);
+      background: var(--bg2); box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .terminal-bar {
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem;
+      background: var(--bg3); border-bottom: 1px solid var(--border);
+    }
+    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .terminal-dot.r { background: #ff5f57; } .terminal-dot.y { background: #ffbd2e; } .terminal-dot.g { background: #28c840; }
+    .terminal-title { flex: 1; text-align: center; font-size: 0.75rem; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+    .terminal-body {
+      padding: 1.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
+      line-height: 1.8; color: var(--text2); min-height: 200px;
+    }
+    .terminal-body .cmd { color: var(--green2); }
+    .terminal-body .accent { color: var(--accent2); }
+    .terminal-body .info { color: var(--blue); }
+    .terminal-body .dim { color: var(--text3); }
+    .terminal-body .line { opacity: 0; animation: typeLine 0.3s ease forwards; }
+    @keyframes typeLine { to { opacity: 1; } }
+
+    /* ─── Stats Bar ─── */
+    .stats-bar {
+      display: flex; justify-content: center; gap: 4rem; margin-top: 5rem;
+      padding: 2.5rem 0; animation: fadeInUp 0.8s ease 0.5s both;
+    }
+    .stat-item { text-align: center; }
+    .stat-num {
+      font-size: 2.5rem; font-weight: 900; letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--text), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-label { font-size: 0.8rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.25rem; }
+
+    /* ─── Section Shared ─── */
+    .section { padding: 6rem 0; position: relative; z-index: 1; }
+    .section-header { text-align: center; margin-bottom: 4rem; }
+    .section-tag {
+      display: inline-block; padding: 0.3rem 1rem;
+      background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.2);
+      border-radius: 100px; font-size: 0.75rem; font-weight: 600;
+      color: var(--accent2); text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+    .section-header h2 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+    .section-header p { color: var(--text2); max-width: 550px; margin: 0 auto; font-size: 1.05rem; }
+
+    /* ─── Features Bento ─── */
+    .bento-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem; max-width: 1100px; margin: 0 auto;
+    }
+    .bento-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem; position: relative;
+      overflow: hidden; transition: all 0.3s;
+    }
+    .bento-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .bento-card.wide { grid-column: span 2; }
+    .bento-card .icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; margin-bottom: 1.25rem;
+    }
+    .bento-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .bento-card p { color: var(--text2); font-size: 0.88rem; line-height: 1.6; }
+    .bento-card .shine {
+      position: absolute; top: -50%; right: -50%; width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .icon-purple { background: rgba(124,58,237,0.15); color: var(--accent2); }
+    .icon-green { background: rgba(16,185,129,0.15); color: var(--green2); }
+    .icon-blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .icon-pink { background: rgba(236,72,153,0.15); color: var(--pink); }
+
+    /* ─── Comparison ─── */
+    .comparison-table {
+      max-width: 900px; margin: 0 auto;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+    .comparison-table table { width: 100%; border-collapse: collapse; }
+    .comparison-table th {
+      padding: 1rem 1.5rem; text-align: left; font-size: 0.75rem;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3);
+      background: var(--bg3); border-bottom: 1px solid var(--border);
+    }
+    .comparison-table td {
+      padding: 0.85rem 1.5rem; border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .comparison-table tr:last-child td { border-bottom: none; }
+    .comparison-table td:first-child { color: var(--text2); font-weight: 500; }
+    .check { color: var(--green); font-weight: 700; }
+    .cross { color: var(--text3); }
+    .highlight-cell { color: var(--green2); font-weight: 600; }
+    .dim-cell { color: var(--text3); }
+
+    /* ─── Pricing ─── */
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem; max-width: 1000px; margin: 0 auto; align-items: start;
+    }
+    .price-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2.5rem 2rem; transition: all 0.3s; position: relative;
+    }
+    .price-card:hover { border-color: var(--border2); transform: translateY(-4px); }
+    .price-card.featured {
+      border-color: var(--accent);
+      background: linear-gradient(180deg, rgba(124,58,237,0.06) 0%, var(--surface) 100%);
+      box-shadow: 0 0 60px var(--glow), 0 0 120px rgba(124,58,237,0.05);
+    }
+    .price-badge {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, var(--accent), var(--pink));
+      color: white; padding: 0.3rem 1.25rem; border-radius: 100px;
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .price-card .plan-name { font-size: 0.85rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; }
+    .price-card .price { margin: 1rem 0 0.5rem; }
+    .price-card .price strong { font-size: 3rem; font-weight: 900; letter-spacing: -0.03em; }
+    .price-card .price span { color: var(--text3); font-size: 0.9rem; }
+    .price-card .specs {
+      background: var(--bg2); border-radius: 12px; padding: 1rem 1.25rem;
+      margin: 1.5rem 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+    .price-card .specs .label { color: var(--text3); }
+    .price-card .specs .value { text-align: right; font-weight: 600; }
+    .price-card .features { list-style: none; margin-bottom: 2rem; }
+    .price-card .features li {
+      padding: 0.4rem 0; font-size: 0.88rem; color: var(--text2);
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .price-card .features li::before { content: '\2713'; color: var(--green); font-weight: 700; font-size: 0.8rem; }
+    .btn-plan {
+      display: block; width: 100%; padding: 0.85rem; text-align: center;
+      border-radius: 12px; font-weight: 700; font-size: 0.9rem;
+      border: none; cursor: pointer; transition: all 0.3s;
+    }
+    .btn-plan-primary {
+      background: linear-gradient(135deg, var(--accent), #9333ea); color: white;
+      box-shadow: 0 4px 20px var(--glow);
+    }
+    .btn-plan-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 30px var(--glow2); }
+    .btn-plan-outline { background: transparent; color: var(--text); border: 1px solid var(--border2); }
+    .btn-plan-outline:hover { border-color: var(--accent); background: rgba(124,58,237,0.05); }
+
+    /* ─── How It Works ─── */
+    .steps-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;
+      max-width: 900px; margin: 0 auto;
+    }
+    .step-card { text-align: center; padding: 2rem 1.5rem; }
+    .step-num {
+      width: 56px; height: 56px; border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), #9333ea);
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.2rem; margin: 0 auto 1.25rem;
+      box-shadow: 0 4px 20px var(--glow);
+    }
+    .step-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step-card p { color: var(--text2); font-size: 0.88rem; }
+
+    /* ─── Testimonials ─── */
+    .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; max-width: 1000px; margin: 0 auto; }
+    .testimonial {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem;
+    }
+    .testimonial .stars { color: #fbbf24; margin-bottom: 0.75rem; font-size: 0.9rem; letter-spacing: 0.1em; }
+    .testimonial .quote { color: var(--text2); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.25rem; font-style: italic; }
+    .testimonial .author { display: flex; align-items: center; gap: 0.75rem; }
+    .testimonial .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--pink));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.8rem; color: white;
+    }
+    .testimonial .author-info .name { font-weight: 600; font-size: 0.85rem; }
+    .testimonial .author-info .role { color: var(--text3); font-size: 0.75rem; }
+
+    /* ─── FAQ ─── */
+    .faq-list { max-width: 700px; margin: 0 auto; }
+    .faq-item {
+      border: 1px solid var(--border); border-radius: 12px;
+      margin-bottom: 0.75rem; overflow: hidden; background: var(--surface);
+    }
+    .faq-item summary {
+      cursor: pointer; padding: 1.25rem 1.5rem; font-weight: 600; font-size: 0.95rem;
+      list-style: none; display: flex; justify-content: space-between; align-items: center;
+      transition: background 0.2s;
+    }
+    .faq-item summary:hover { background: var(--surface2); }
+    .faq-item summary::after { content: '+'; color: var(--accent2); font-size: 1.2rem; font-weight: 300; }
+    .faq-item[open] summary::after { content: '\2212'; }
+    .faq-item .answer { padding: 0 1.5rem 1.25rem; color: var(--text2); font-size: 0.9rem; line-height: 1.7; }
+
+    /* ─── CTA ─── */
+    .cta-section {
+      padding: 6rem 2rem; text-align: center; position: relative;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg3) 50%, var(--bg) 100%);
+    }
+    .cta-glow {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, rgba(124,58,237,0.1) 0%, transparent 70%);
+      filter: blur(60px); pointer-events: none;
+    }
+    .cta-section h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; position: relative; z-index: 1; }
+    .cta-section p { color: var(--text2); margin-bottom: 2rem; max-width: 480px; margin-left: auto; margin-right: auto; position: relative; z-index: 1; }
+
+    /* ─── Footer ─── */
+    footer {
+      padding: 3rem 2rem 2rem; border-top: 1px solid var(--border);
+      position: relative; z-index: 1;
+    }
+    .footer-grid { display: flex; justify-content: space-between; max-width: 1100px; margin: 0 auto; flex-wrap: wrap; gap: 2rem; }
+    .footer-brand { max-width: 280px; }
+    .footer-brand .logo-text { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .footer-brand .logo-text span { color: var(--accent2); }
+    .footer-brand p { color: var(--text3); font-size: 0.8rem; line-height: 1.6; }
+    .footer-col h4 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 0.75rem; }
+    .footer-col a { display: block; color: var(--text2); font-size: 0.85rem; padding: 0.25rem 0; }
+    .footer-col a:hover { color: var(--text); }
+    .footer-bottom { text-align: center; padding-top: 2rem; margin-top: 2rem; border-top: 1px solid var(--border); color: var(--text3); font-size: 0.8rem; }
+
+    /* ─── Modal ─── */
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+      z-index: 200; justify-content: center; align-items: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: 20px; padding: 2.5rem; max-width: 440px; width: 90%;
+      position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .modal h3 { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .modal p { color: var(--text2); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .modal input {
+      width: 100%; padding: 0.8rem 1rem; border-radius: 10px;
+      border: 1px solid var(--border2); background: var(--bg);
+      color: var(--text); font-size: 0.9rem; margin-bottom: 0.75rem;
+      font-family: 'Inter', sans-serif; transition: border-color 0.2s;
+    }
+    .modal input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+    .modal .btn-primary { width: 100%; margin-top: 0.5rem; justify-content: center; }
+    .modal .close-btn {
+      position: absolute; top: 1rem; right: 1.25rem; background: none;
+      border: none; color: var(--text3); font-size: 1.5rem; cursor: pointer;
+      transition: color 0.2s;
+    }
+    .modal .close-btn:hover { color: var(--text); }
+    .success-msg { color: var(--green); font-weight: 600; display: none; text-align: center; padding: 1.5rem 0; font-size: 1.05rem; }
+
+    /* ─── Animations ─── */
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.5rem; }
+      .stats-bar { flex-direction: column; gap: 1.5rem; }
+      .bento-grid { grid-template-columns: 1fr; }
+      .bento-card.wide { grid-column: span 1; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 380px; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .testimonials-grid { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .footer-grid { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Particles -->
+  <canvas id="particles"></canvas>
+
+  <!-- Nav -->
+  <nav>
+    <div class="nav-brand">
+      <div class="logo">⚡</div>
+      Astra<span>Cloud</span>
+    </div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#comparison">Compare</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="https://github.com/AstraOS-India/astra-os" target="_blank">GitHub</a>
+      <button class="btn-nav" onclick="openModal('pro')">Get Started</button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <div class="hero-badge"><div class="pulse"></div> Now live — Deploy in 60 seconds</div>
+      <h1><span class="gradient">Your AI Agent.<br>Always On. Zero DevOps.</span></h1>
+      <p class="sub">Deploy a fully managed AstraOS instance with 55+ skills, 14+ channels, and enterprise security. Auto-updates, daily backups, and no server management.</p>
+      <div class="hero-cta">
+        <a href="#pricing" class="btn-primary">Start for $15/mo &rarr;</a>
+        <a href="https://github.com/AstraOS-India/astra-os" class="btn-secondary" target="_blank">Self-Host Free</a>
+      </div>
+
+      <!-- Animated Terminal -->
+      <div class="terminal-wrap">
+        <div class="terminal-bar">
+          <div class="terminal-dot r"></div>
+          <div class="terminal-dot y"></div>
+          <div class="terminal-dot g"></div>
+          <div class="terminal-title">astracloud ~ deploy</div>
+        </div>
+        <div class="terminal-body" id="terminal"></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-bar">
+        <div class="stat-item"><div class="stat-num" data-count="55">0</div><div class="stat-label">Skills</div></div>
+        <div class="stat-item"><div class="stat-num" data-count="14">0</div><div class="stat-label">Channels</div></div>
+        <div class="stat-item"><div class="stat-num" data-count="4">0</div><div class="stat-label">LLM Providers</div></div>
+        <div class="stat-item"><div class="stat-num">99.9%</div><div class="stat-label">Uptime SLA</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Bento -->
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">Features</div>
+        <h2>Everything MyClaw Has. And More.</h2>
+        <p>AstraCloud runs the full AstraOS v4.0 stack. Nothing stripped, nothing limited.</p>
+      </div>
+      <div class="bento-grid">
+        <div class="bento-card wide reveal">
+          <div class="shine"></div>
+          <div class="icon icon-purple">&#x1f6e1;</div>
+          <h3>GatewayShield + CredentialVault + SkillSandbox</h3>
+          <p>Triple-layer security: CVE prevention, CSRF protection, brute force detection, AES-256-GCM encrypted credentials, Ed25519 skill signing with quarantine. Enterprise-grade from day one.</p>
+        </div>
+        <div class="bento-card reveal">
+          <div class="icon icon-blue">&#x1f916;</div>
+          <h3>Multi-LLM</h3>
+          <p>Claude, GPT-4o, Gemini, Ollama. Hot-swap per request. Bring your own keys.</p>
+        </div>
+        <div class="bento-card reveal">
+          <div class="icon icon-green">&#x1f4e1;</div>
+          <h3>14+ Channels</h3>
+          <p>WhatsApp, Telegram, Discord, Slack, Teams, Signal, WebChat, Phone — all pre-configured.</p>
+        </div>
+        <div class="bento-card reveal">
+          <div class="icon icon-pink">&#x1f9e0;</div>
+          <h3>GraphRAG Memory</h3>
+          <p>FTS5 + Vector + Knowledge Graph with Reciprocal Rank Fusion. Your agent remembers everything.</p>
+        </div>
+        <div class="bento-card wide reveal">
+          <div class="shine"></div>
+          <div class="icon icon-purple">&#x1f3a8;</div>
+          <h3>Visual Workflow Builder + Admin Dashboard</h3>
+          <p>Drag-and-drop DAG editor with 7 node types. React dashboard with 11 pages: agents, skills marketplace, memory explorer, traces, security, vault, and settings. Full observability via OpenTelemetry.</p>
+        </div>
+        <div class="bento-card reveal">
+          <div class="icon icon-green">&#x1f504;</div>
+          <h3>Auto-Updates</h3>
+          <p>We handle security patches, version upgrades, and daily encrypted backups. Always current.</p>
+        </div>
+        <div class="bento-card reveal">
+          <div class="icon icon-blue">&#x1f3e2;</div>
+          <h3>Enterprise Ready</h3>
+          <p>SSO (SAML + OIDC), RBAC, audit log, Stripe billing, data residency (7 regions), edge runtime.</p>
+        </div>
+        <div class="bento-card reveal">
+          <div class="icon icon-pink">&#x1f5e3;</div>
+          <h3>Talk Mode</h3>
+          <p>Full voice: interrupt, wake word, push-to-talk, ElevenLabs TTS, Whisper STT.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison -->
+  <section class="section" id="comparison" style="background: var(--bg2);">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">Compare</div>
+        <h2>AstraCloud vs MyClaw</h2>
+        <p>Same concept. Better execution. Lower price.</p>
+      </div>
+      <div class="comparison-table reveal">
+        <table>
+          <thead><tr><th>Feature</th><th>MyClaw.ai</th><th>AstraCloud</th></tr></thead>
+          <tbody>
+            <tr><td>Starting price</td><td class="dim-cell">$19/mo</td><td class="highlight-cell">$15/mo</td></tr>
+            <tr><td>Bundled skills</td><td class="dim-cell">Community</td><td class="highlight-cell">55+ built-in + marketplace</td></tr>
+            <tr><td>Channels</td><td class="dim-cell">~10</td><td class="highlight-cell">14+</td></tr>
+            <tr><td>LLM providers</td><td class="dim-cell">OpenAI only</td><td class="highlight-cell">Claude, GPT-4o, Gemini, Ollama</td></tr>
+            <tr><td>MCP + A2A protocols</td><td class="cross">&#x2717;</td><td class="check">&#x2713;</td></tr>
+            <tr><td>GraphRAG memory</td><td class="cross">&#x2717;</td><td class="check">&#x2713;</td></tr>
+            <tr><td>Visual workflow builder</td><td class="cross">&#x2717;</td><td class="check">&#x2713;</td></tr>
+            <tr><td>Admin dashboard</td><td class="cross">&#x2717;</td><td class="check">&#x2713; (11 pages)</td></tr>
+            <tr><td>Enterprise SSO</td><td class="cross">&#x2717;</td><td class="check">&#x2713; SAML + OIDC</td></tr>
+            <tr><td>Audit log</td><td class="cross">&#x2717;</td><td class="check">&#x2713; SHA-256 + GDPR</td></tr>
+            <tr><td>Security layer</td><td class="dim-cell">Basic</td><td class="highlight-cell">GatewayShield + Vault + Sandbox</td></tr>
+            <tr><td>Open source</td><td class="dim-cell">Uses OpenClaw</td><td class="highlight-cell">MIT Licensed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="section" id="pricing">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">Pricing</div>
+        <h2>Simple. Transparent. No Surprises.</h2>
+        <p>Every plan includes auto-updates, daily backups, and the full AstraOS feature set. Cancel anytime.</p>
+      </div>
+      <div class="pricing-grid">
+        <!-- Starter -->
+        <div class="price-card reveal">
+          <div class="plan-name">Starter</div>
+          <div class="price"><strong>$15</strong> <span>/month</span></div>
+          <div class="specs">
+            <div class="label">vCPU</div><div class="value">2 cores</div>
+            <div class="label">RAM</div><div class="value">4 GB</div>
+            <div class="label">Storage</div><div class="value">40 GB SSD</div>
+            <div class="label">Bandwidth</div><div class="value">1 TB</div>
+          </div>
+          <ul class="features">
+            <li>Always-on AI agent (24/7)</li>
+            <li>All 55+ bundled skills</li>
+            <li>14+ messaging channels</li>
+            <li>Daily encrypted backups</li>
+            <li>Auto-updates</li>
+          </ul>
+          <button class="btn-plan btn-plan-outline" onclick="openModal('starter')">Get Started</button>
+        </div>
+        <!-- Pro -->
+        <div class="price-card featured reveal">
+          <div class="price-badge">Most Popular</div>
+          <div class="plan-name">Pro</div>
+          <div class="price"><strong>$35</strong> <span>/month</span></div>
+          <div class="specs">
+            <div class="label">vCPU</div><div class="value">4 cores</div>
+            <div class="label">RAM</div><div class="value">8 GB</div>
+            <div class="label">Storage</div><div class="value">80 GB SSD</div>
+            <div class="label">Bandwidth</div><div class="value">3 TB</div>
+          </div>
+          <ul class="features">
+            <li>Everything in Starter</li>
+            <li>GraphRAG memory</li>
+            <li>Visual workflow builder</li>
+            <li>MCP + A2A protocols</li>
+            <li>Priority support</li>
+            <li>Custom domain</li>
+          </ul>
+          <button class="btn-plan btn-plan-primary" onclick="openModal('pro')">Get Started</button>
+        </div>
+        <!-- Enterprise -->
+        <div class="price-card reveal">
+          <div class="plan-name">Enterprise</div>
+          <div class="price"><strong>$69</strong> <span>/month</span></div>
+          <div class="specs">
+            <div class="label">vCPU</div><div class="value">8 cores</div>
+            <div class="label">RAM</div><div class="value">16 GB</div>
+            <div class="label">Storage</div><div class="value">160 GB SSD</div>
+            <div class="label">Bandwidth</div><div class="value">Unlimited</div>
+          </div>
+          <ul class="features">
+            <li>Everything in Pro</li>
+            <li>SSO (SAML + OIDC)</li>
+            <li>Immutable audit log</li>
+            <li>Data residency (7 regions)</li>
+            <li>Multi-tenancy + RBAC</li>
+            <li>Dedicated support + SLA</li>
+          </ul>
+          <button class="btn-plan btn-plan-outline" onclick="openModal('enterprise')">Get Started</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="section" id="how-it-works" style="background: var(--bg2);">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">Setup</div>
+        <h2>Live in 60 Seconds</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <div class="step-num">1</div>
+          <h3>Pick Your Plan</h3>
+          <p>Choose Starter, Pro, or Enterprise. All plans include the complete AstraOS feature set.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">2</div>
+          <h3>Add Your API Key</h3>
+          <p>Enter your Anthropic, OpenAI, or Gemini key. Stored in CredentialVault with AES-256-GCM encryption.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-num">3</div>
+          <h3>Your Agent Goes Live</h3>
+          <p>Dedicated instance provisioned in 60 seconds. Dashboard, channels, and skills ready to use.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">Testimonials</div>
+        <h2>Trusted by Builders</h2>
+      </div>
+      <div class="testimonials-grid">
+        <div class="testimonial reveal">
+          <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <div class="quote">"Migrated from MyClaw to AstraCloud in 20 minutes. More skills, better security, and $4/mo cheaper. The workflow builder alone is worth it."</div>
+          <div class="author">
+            <div class="avatar">RK</div>
+            <div class="author-info"><div class="name">Raj Kumar</div><div class="role">CTO, FinBot AI</div></div>
+          </div>
+        </div>
+        <div class="testimonial reveal">
+          <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <div class="quote">"The GraphRAG memory is incredible. Our support bot remembers every customer interaction and connects the dots across conversations."</div>
+          <div class="author">
+            <div class="avatar">SP</div>
+            <div class="author-info"><div class="name">Sarah Park</div><div class="role">Head of Support, Nexus</div></div>
+          </div>
+        </div>
+        <div class="testimonial reveal">
+          <div class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <div class="quote">"14 channels out of the box. We connected WhatsApp, Telegram, and Slack in one afternoon. GatewayShield security gives us peace of mind."</div>
+          <div class="author">
+            <div class="avatar">AM</div>
+            <div class="author-info"><div class="name">Arun Menon</div><div class="role">Founder, ChatOps.io</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" id="faq" style="background: var(--bg2);">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">FAQ</div>
+        <h2>Questions? Answered.</h2>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item reveal">
+          <summary>Can I self-host AstraOS instead?</summary>
+          <div class="answer">Absolutely! AstraOS is fully open-source (MIT). Run <code>npx astra-os</code> or <code>bash setup.sh</code> to set up on your own server. AstraCloud is for those who want zero DevOps.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Do I need my own LLM API key?</summary>
+          <div class="answer">Yes. AstraOS connects to Claude, GPT-4o, Gemini, or Ollama. You provide your own API key and pay the LLM provider directly — full control over costs and model selection.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>What's included in every plan?</summary>
+          <div class="answer">All 55+ skills, 14+ channels, admin dashboard, workflow builder, marketplace, auto-updates, daily backups, and enterprise security. Higher plans add more compute + premium features like SSO and audit log.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Can I migrate from MyClaw / OpenClaw?</summary>
+          <div class="answer">Yes. AstraOS includes a built-in migration tool that imports your skills, settings, and data from OpenClaw.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Is my data private?</summary>
+          <div class="answer">100%. Each instance runs in isolation. Data encrypted at rest (AES-256-GCM) and in transit (TLS 1.3). We never access your data. Enterprise plans include data residency for 7 regions.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Can I cancel anytime?</summary>
+          <div class="answer">Yes. No contracts, no lock-in. Cancel and export your data anytime. 7-day money-back guarantee.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="cta-glow"></div>
+    <h2>Ready to Deploy Your AI Agent?</h2>
+    <p>Join developers and businesses running AstraOS in the cloud. Start in 60 seconds, cancel anytime.</p>
+    <a href="#pricing" class="btn-primary" style="position:relative;z-index:1;">Get Started — $15/mo &rarr;</a>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo-text">⚡ Astra<span>Cloud</span></div>
+        <p>Managed AstraOS hosting. Your AI agent, always on, zero DevOps. Built in India, deployed globally.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#comparison">Compare</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="footer-col">
+        <h4>Developers</h4>
+        <a href="https://github.com/AstraOS-India/astra-os" target="_blank">GitHub</a>
+        <a href="/docs">API Docs</a>
+        <a href="/health">Status</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="mailto:support@astracloud.ai">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>AstraCloud is powered by <a href="https://github.com/AstraOS-India/astra-os">AstraOS v4.0</a> (MIT License) | Made with &#x2764; in India</p>
+    </div>
+  </footer>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="signupModal">
+    <div class="modal">
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <h3 id="modal-title">Get Started with AstraCloud</h3>
+      <p id="modal-subtitle">Your dedicated AstraOS instance will be provisioned in 60 seconds.</p>
+      <div id="signup-form">
+        <input type="text" id="signup-name" placeholder="Your name" required>
+        <input type="email" id="signup-email" placeholder="Email address" required>
+        <input type="text" id="signup-company" placeholder="Company (optional)">
+        <input type="hidden" id="signup-plan" value="pro">
+        <button class="btn-primary" onclick="submitSignup()">Create My Instance &rarr;</button>
+      </div>
+      <div class="success-msg" id="success-msg">
+        &#x2713; Your AstraCloud instance is being provisioned!<br>
+        <span style="font-size:0.85rem;color:var(--text2);font-weight:400;">Check your email for access details.</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ─── Particles ───
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function initParticles() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      particles = [];
+      const count = Math.floor((canvas.width * canvas.height) / 15000);
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: (Math.random() - 0.5) * 0.3,
+          r: Math.random() * 1.5 + 0.5,
+          o: Math.random() * 0.3 + 0.1,
+        });
+      }
+    }
+
+    function drawParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const p of particles) {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(124, 58, 237, ${p.o})`;
+        ctx.fill();
+      }
+      // Draw connections
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(124, 58, 237, ${0.06 * (1 - dist / 120)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(drawParticles);
+    }
+
+    initParticles();
+    drawParticles();
+    window.addEventListener('resize', initParticles);
+
+    // ─── Terminal Animation ───
+    const terminalLines = [
+      { text: '$ npx astra-os deploy --plan pro', cls: 'cmd' },
+      { text: '', cls: 'dim' },
+      { text: '  [1/5] Provisioning instance...', cls: 'info' },
+      { text: '  [2/5] Configuring GatewayShield + CredentialVault', cls: 'info' },
+      { text: '  [3/5] Loading 55 skills, 14 channels', cls: 'info' },
+      { text: '  [4/5] Starting AstraOS v4.0...', cls: 'info' },
+      { text: '  [5/5] Health check passed', cls: 'accent' },
+      { text: '', cls: 'dim' },
+      { text: '  \u2713 Your agent is live at https://my-agent.astracloud.ai', cls: 'accent' },
+      { text: '  \u2713 Dashboard: https://my-agent.astracloud.ai/dashboard', cls: 'accent' },
+      { text: '  \u2713 Deploy time: 47 seconds', cls: 'dim' },
+    ];
+
+    const terminal = document.getElementById('terminal');
+    terminalLines.forEach((line, i) => {
+      setTimeout(() => {
+        const div = document.createElement('div');
+        div.className = `line ${line.cls}`;
+        div.textContent = line.text || '\u00A0';
+        div.style.animationDelay = '0s';
+        terminal.appendChild(div);
+      }, 400 + i * 350);
+    });
+
+    // ─── Counter Animation ───
+    function animateCounters() {
+      document.querySelectorAll('.stat-num[data-count]').forEach(el => {
+        const target = parseInt(el.dataset.count);
+        let current = 0;
+        const step = Math.ceil(target / 40);
+        const timer = setInterval(() => {
+          current += step;
+          if (current >= target) { current = target; clearInterval(timer); }
+          el.textContent = current + '+';
+        }, 40);
+      });
+    }
+
+    // ─── Scroll Reveal ───
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          if (entry.target.closest('.stats-bar')) animateCounters();
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ─── Modal ───
+    const planNames = { starter: 'Starter ($15/mo)', pro: 'Pro ($35/mo)', enterprise: 'Enterprise ($69/mo)' };
+
+    function openModal(plan) {
+      document.getElementById('signup-plan').value = plan;
+      document.getElementById('modal-title').textContent = `Get Started \u2014 ${planNames[plan] || 'Pro'}`;
+      document.getElementById('signupModal').classList.add('active');
+      document.getElementById('signup-form').style.display = 'block';
+      document.getElementById('success-msg').style.display = 'none';
+      document.getElementById('signup-name').focus();
+    }
+
+    function closeModal() { document.getElementById('signupModal').classList.remove('active'); }
+
+    async function submitSignup() {
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const company = document.getElementById('signup-company').value.trim();
+      const plan = document.getElementById('signup-plan').value;
+      if (!name || !email) { alert('Please fill in your name and email.'); return; }
+
+      try {
+        const resp = await fetch('/api/cloud/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, company, plan }),
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.checkoutUrl) { window.location.href = data.checkoutUrl; return; }
+        }
+      } catch (e) { /* waitlist mode */ }
+
+      document.getElementById('signup-form').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+    }
+
+    document.getElementById('signupModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+  </script>
+
+</body>
+</html>

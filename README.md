@@ -51,8 +51,10 @@ AstraOS (Sanskrit: *Astra* = divine weapon / celestial tool) is the most secure 
 | **GraphRAG Memory** | No | **FTS5 + Vector + Knowledge Graph** with RRF |
 | **Computer Use** | No | **Screenshot + click + type + scroll** GUI automation |
 | **Observability** | No | **OpenTelemetry** — traces, metrics, spans, histograms |
-| **Admin Dashboard** | No | **React + Vite** — 8 pages, dark theme, real-time data |
+| **Admin Dashboard** | No | **React + Vite** — 11 pages, dark theme, real-time data |
 | **Visual Workflow Builder** | No | **React Flow** DAG editor with 7 node types |
+| **Managed Hosting** | MyClaw.ai ($19/mo) | **AstraCloud** ($15/mo) — cheaper, more features |
+| **Setup Experience** | `openclaw onboard` | **`npx astra-os`** + `setup.sh` + `setup.ps1` + one-click deploy |
 
 ---
 
@@ -223,47 +225,44 @@ curl -X POST http://localhost:3000/api/voice/stt \
 
 ## Quick Start
 
-### 1. Install
+### Option A: Interactive Wizard (Recommended)
 
 ```bash
 git clone https://github.com/AstraOS-India/astra-os
-cd astra-os && npm install
+cd astra-os
+npx astra-os
 ```
 
-### 2. Configure
+The wizard guides you through LLM provider selection, API key setup, security key generation, dependency installation, build, and health check — all in one interactive flow.
+
+### Option B: Platform Scripts
 
 ```bash
-cp .env.example .env
+# macOS / Linux
+git clone https://github.com/AstraOS-India/astra-os
+cd astra-os && bash setup.sh
+
+# Windows (PowerShell)
+git clone https://github.com/AstraOS-India/astra-os
+cd astra-os; .\setup.ps1
 ```
 
-Add at minimum one LLM provider key:
+### Option C: Manual Setup
 
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...    # Claude (default)
-OPENAI_API_KEY=sk-...           # GPT-4o
-GEMINI_API_KEY=...              # Gemini
-OLLAMA_BASE_URL=http://localhost:11434  # Local models
+git clone https://github.com/AstraOS-India/astra-os
+cd astra-os
+cp .env.example .env        # Edit .env — add your API key
+npm install && npm run build
+npm start
 ```
 
-### 3. Run
+### Verify
 
 ```bash
-npm run dev
-```
+# Health check
+curl http://localhost:3000/health
 
-```
-AstraOS v4.0 | REST: :3000 | SSE: :3000/api/chat/stream
-Protocols: MCP, A2A | Providers: anthropic, openai, gemini, ollama
-Memory: FTS5 + Vector + GraphRAG | Skills: 55 loaded
-Security: GatewayShield (A+) | CredentialVault | SkillSandbox
-Dashboard: http://localhost:5173 | RBAC: Active | Marketplace: Ready
-Enterprise: SSO, Audit, DataResidency (7 regions), Billing, Edge
-Voice: Talk Mode ready | Channels: 14 active
-```
-
-### 4. Test
-
-```bash
 # Send a message
 curl -X POST http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
@@ -273,45 +272,51 @@ curl -X POST http://localhost:3000/api/chat \
 curl -N -X POST http://localhost:3000/api/chat/stream \
   -H "Content-Type: application/json" \
   -d '{"message":"Write a haiku","userId":"demo"}'
-
-# Health check
-curl http://localhost:3000/health
 ```
+
+Open **http://localhost:3000** for the Dashboard, **http://localhost:3000/docs** for API docs.
 
 ### Docker
 
 ```bash
 docker compose up -d
-# AstraOS runs on :3000, Redis on :6379
+# AstraOS runs on :3000
 ```
 
 ---
 
-## One-Click Deploy
+## AstraCloud — Managed Hosting
 
-### DigitalOcean
+Don't want to self-host? **AstraCloud** is our fully managed hosting platform — like MyClaw.ai, but cheaper and more powerful.
 
-[![Deploy to DigitalOcean](https://img.shields.io/badge/Deploy-DigitalOcean-0080FF?style=for-the-badge&logo=digitalocean)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/AstraOS-India/astra-os)
+| Plan | Price | Specs | Features |
+|------|-------|-------|----------|
+| **Starter** | $15/mo | 2 vCPU, 4GB RAM, 40GB SSD | 55+ skills, 14+ channels, daily backups |
+| **Pro** | $35/mo | 4 vCPU, 8GB RAM, 80GB SSD | + GraphRAG, workflows, MCP/A2A, priority support |
+| **Enterprise** | $69/mo | 8 vCPU, 16GB RAM, 160GB SSD | + SSO, audit log, data residency, RBAC |
 
-```bash
-# Or via doctl CLI
-doctl apps create --spec .do/app.yaml
-```
+Visit `/cloud` on your AstraOS instance or deploy to try it.
 
-### Railway
+---
+
+## One-Click Cloud Deploy (Self-Host)
 
 [![Deploy on Railway](https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=for-the-badge&logo=railway)](https://railway.app/template/astra-os)
+[![Deploy to Render](https://img.shields.io/badge/Deploy-Render-46E3B7?style=for-the-badge&logo=render)](https://render.com/deploy?repo=https://github.com/AstraOS-India/astra-os)
+[![Deploy to DigitalOcean](https://img.shields.io/badge/Deploy-DigitalOcean-0080FF?style=for-the-badge&logo=digitalocean)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/AstraOS-India/astra-os)
+
+### Railway
 
 ```bash
 # Or via Railway CLI
 railway init && railway up
 ```
 
+Uses `railway.toml` — auto-builds backend + dashboard, serves on port 3000 with health checks.
+
 ### Render
 
-[![Deploy to Render](https://img.shields.io/badge/Deploy-Render-46E3B7?style=for-the-badge&logo=render)](https://render.com/deploy?repo=https://github.com/AstraOS-India/astra-os)
-
-Uses `render.yaml` blueprint for automatic service configuration.
+Uses `render.yaml` blueprint — auto-generates JWT_SECRET and MASTER_ENCRYPTION_KEY. Just add your `ANTHROPIC_API_KEY`.
 
 ### Fly.io
 
