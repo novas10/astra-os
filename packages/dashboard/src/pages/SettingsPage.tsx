@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Settings, Key, Users, Building, Shield, Bell,
@@ -30,6 +30,9 @@ export default function SettingsPage() {
   const saveMutation = useMutation({
     mutationFn: (data: Record<string, unknown>) => updateSettings(data),
   });
+
+  const providerRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const authRefs = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement | null>>({});
 
   const getVal = (key: string, fallback: string) => formState[key] ?? (settings as Record<string, unknown>)?.[key]?.toString() ?? fallback;
   const setVal = (key: string, value: string) => setFormState((s) => ({ ...s, [key]: value }));
@@ -146,6 +149,7 @@ export default function SettingsPage() {
                           type="password"
                           placeholder="••••••••••••"
                           className="input w-full mt-1"
+                          ref={(el) => { providerRefs.current[provider.envKey] = el; }}
                         />
                       </div>
                       <p className="text-xs text-gray-500 mt-2">Models: {provider.models}</p>
@@ -153,8 +157,25 @@ export default function SettingsPage() {
                   ))}
                 </div>
               </div>
-              <button className="btn-primary flex items-center gap-2">
-                <Save className="w-4 h-4" /> Save Providers
+              <button
+                onClick={() => {
+                  const data: Record<string, unknown> = {};
+                  Object.entries(providerRefs.current).forEach(([key, el]) => {
+                    if (el?.value) data[key] = el.value;
+                  });
+                  if (Object.keys(data).length > 0) saveMutation.mutate(data);
+                }}
+                disabled={saveMutation.isPending}
+                className="btn-primary flex items-center gap-2"
+              >
+                {saveMutation.isPending ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : saveMutation.isSuccess ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                {saveMutation.isSuccess ? "Saved" : "Save Providers"}
               </button>
             </div>
           )}
@@ -166,12 +187,12 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm text-gray-400 block mb-1">JWT Secret</label>
-                    <input type="password" placeholder="••••••••••••" className="input w-full" />
+                    <input type="password" placeholder="••••••••••••" className="input w-full" ref={(el) => { authRefs.current["JWT_SECRET"] = el; }} />
                     <p className="text-xs text-gray-500 mt-1">Used to sign JWT tokens. Auto-generated if not set.</p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-400 block mb-1">Token TTL (seconds)</label>
-                    <input type="number" defaultValue={86400} className="input w-32" />
+                    <input type="number" defaultValue={86400} className="input w-32" ref={(el) => { authRefs.current["TOKEN_TTL"] = el; }} />
                   </div>
                   <div>
                     <label className="text-sm text-gray-400 block mb-1">API Keys</label>
@@ -179,13 +200,31 @@ export default function SettingsPage() {
                       placeholder="One key per line"
                       rows={3}
                       className="input w-full"
+                      ref={(el) => { authRefs.current["ASTRA_API_KEYS"] = el; }}
                     />
                     <p className="text-xs text-gray-500 mt-1">Comma-separated or one per line.</p>
                   </div>
                 </div>
               </div>
-              <button className="btn-primary flex items-center gap-2">
-                <Save className="w-4 h-4" /> Save Auth Settings
+              <button
+                onClick={() => {
+                  const data: Record<string, unknown> = {};
+                  Object.entries(authRefs.current).forEach(([key, el]) => {
+                    if (el?.value) data[key] = el.value;
+                  });
+                  if (Object.keys(data).length > 0) saveMutation.mutate(data);
+                }}
+                disabled={saveMutation.isPending}
+                className="btn-primary flex items-center gap-2"
+              >
+                {saveMutation.isPending ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : saveMutation.isSuccess ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                {saveMutation.isSuccess ? "Saved" : "Save Auth Settings"}
               </button>
             </div>
           )}

@@ -175,6 +175,9 @@ export class AuditLog {
       }
     }
 
+    // Rewrite on-disk JSONL files with redacted data
+    await this.rewriteRedactedFiles(userId);
+
     // Log the redaction itself
     await this.log(
       "data.delete",
@@ -228,6 +231,40 @@ export class AuditLog {
       }
     }
     return sanitized;
+  }
+
+  private async rewriteRedactedFiles(userId: string): Promise<void> {
+    try {
+      const files = await fs.readdir(this.logDir);
+      const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
+      for (const file of jsonlFiles) {
+        const filePath = path.join(this.logDir, file);
+        const content = await fs.readFile(filePath, "utf-8");
+        const lines = content.trim().split("\n").filter(Boolean);
+        let modified = false;
+        const rewritten = lines.map((line) => {
+          try {
+            const entry = JSON.parse(line) as AuditEntry;
+            if (entry.actor?.userId === userId) {
+              entry.actor = { userId: "[REDACTED]", role: entry.actor.role };
+              entry.details = { redacted: true, reason: "GDPR right to erasure" };
+              if (entry.resource) {
+                entry.resource = { type: entry.resource.type, id: "[REDACTED]" };
+              }
+              modified = true;
+            }
+            return JSON.stringify(entry);
+          } catch {
+            return line;
+          }
+        });
+        if (modified) {
+          await fs.writeFile(filePath, rewritten.join("\n") + "\n", "utf-8");
+        }
+      }
+    } catch {
+      logger.warn("[AuditLog] Failed to rewrite JSONL files for GDPR redaction");
+    }
   }
 
   private async appendToFile(entry: AuditEntry): Promise<void> {

@@ -59,12 +59,6 @@ function extractToken(req: Request): string | null {
     return apiKey.trim();
   }
 
-  // Check query param (for WebSocket upgrades)
-  const queryKey = req.query.api_key;
-  if (typeof queryKey === "string") {
-    return queryKey.trim();
-  }
-
   return null;
 }
 
