@@ -245,6 +245,11 @@ export class Gateway {
     // Initialize optional channel adapters
     await this.initializeAdapters();
 
+    // Register Telegram webhook if token is set
+    if (process.env.TELEGRAM_BOT_TOKEN) {
+      await this.registerTelegramWebhook();
+    }
+
     // ─── REST API ───
     this.app.post("/api/chat", async (req, res) => {
       const { message, sessionId, channel = "api", userId = "anonymous" } = req.body;
@@ -266,19 +271,117 @@ export class Gateway {
     // ─── Telegram Webhook ───
     this.app.post("/webhook/telegram", async (req, res) => {
       res.sendStatus(200);
-      const message = req.body?.message;
-      if (!message?.text) return;
+      const update = req.body;
+      const message = update?.message;
+      const callback = update?.callback_query;
 
+      // Handle callback queries from inline buttons
+      if (callback) {
+        const cbChatId = String(callback.message.chat.id);
+        const cbSessionId = `tg_${cbChatId}`;
+        const cbAgent = this.getOrCreateAgent(cbSessionId, "telegram", callback.from?.username || cbChatId);
+        try {
+          await this.tgApi("answerCallbackQuery", { callback_query_id: callback.id });
+          await this.tgApi("sendChatAction", { chat_id: cbChatId, action: "typing" });
+          const cbResult = await cbAgent.run(callback.data);
+          await this.tgSend(cbChatId, cbResult.response);
+        } catch (err) {
+          logger.error(`[Telegram] Callback error: ${(err as Error).message}`);
+        }
+        return;
+      }
+
+      if (!message) return;
       const chatId = String(message.chat.id);
       const sessionId = `tg_${chatId}`;
-      const agent = this.getOrCreateAgent(sessionId, "telegram", message.from?.username || chatId);
-      const result = await agent.run(message.text);
+      const username = message.from?.username || message.from?.first_name || chatId;
 
-      await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, text: result.response, parse_mode: "Markdown" }),
-      });
+      try {
+        // Show typing indicator
+        await this.tgApi("sendChatAction", { chat_id: chatId, action: "typing" });
+
+        // Handle voice messages — transcribe with STT then process
+        if (message.voice || message.audio) {
+          const fileId = message.voice?.file_id || message.audio?.file_id;
+          const fileInfo = await this.tgApi("getFile", { file_id: fileId });
+          const filePath = fileInfo.result?.file_path;
+          if (filePath) {
+            const audioUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${filePath}`;
+            const audioResp = await fetch(audioUrl);
+            const audioBuffer = Buffer.from(await audioResp.arrayBuffer());
+            const sttResult = await this.voice.speechToText(audioBuffer);
+            if (sttResult.text) {
+              await this.tgApi("sendChatAction", { chat_id: chatId, action: "typing" });
+              const agent = this.getOrCreateAgent(sessionId, "telegram", username);
+              const result = await agent.run(sttResult.text);
+              await this.tgSend(chatId, result.response);
+
+              // Also send voice reply if response is short enough
+              if (result.response.length < 1000) {
+                try {
+                  await this.tgApi("sendChatAction", { chat_id: chatId, action: "record_voice" });
+                  const ttsAudio = await this.voice.textToSpeech({ text: result.response });
+                  await this.tgSendVoice(chatId, ttsAudio);
+                } catch {
+                  // Voice reply is best-effort — skip silently if TTS fails
+                }
+              }
+            } else {
+              await this.tgSend(chatId, "Sorry, I could not understand the voice message. Please try again or type your message.");
+            }
+          }
+          return;
+        }
+
+        // Handle photo with caption
+        if (message.photo && message.caption) {
+          const agent = this.getOrCreateAgent(sessionId, "telegram", username);
+          const result = await agent.run(message.caption);
+          await this.tgSend(chatId, result.response);
+          return;
+        }
+
+        // Handle text messages
+        if (!message.text) return;
+
+        // Handle /start command
+        if (message.text === "/start") {
+          await this.tgSend(chatId, "Welcome to *AstraOS* \\- your AI agent\\!\n\nSend me any message and I will help you\\. I can also process voice messages\\.\n\nType /help to see what I can do\\.");
+          return;
+        }
+
+        // Handle /help command
+        if (message.text === "/help") {
+          await this.tgSend(chatId, "*AstraOS Commands*\n\n/start \\- Welcome message\n/help \\- Show this help\n/skills \\- List available skills\n/voice \\- Toggle voice replies\n\nOr just send me any message or voice note\\!");
+          return;
+        }
+
+        // Handle /skills command
+        if (message.text === "/skills") {
+          const skillList = this.skills.listSkills().filter(s => s.enabled).slice(0, 20);
+          const skillText = skillList.map(s => `• *${s.name}* \\- ${(s.description || "").replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&")}`).join("\n");
+          await this.tgSend(chatId, `*Available Skills \\(${skillList.length}\\)*\n\n${skillText}`);
+          return;
+        }
+
+        // Keep typing indicator alive for long responses
+        const typingInterval = setInterval(() => {
+          this.tgApi("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
+        }, 4000);
+
+        const agent = this.getOrCreateAgent(sessionId, "telegram", username);
+        const result = await agent.run(message.text);
+        clearInterval(typingInterval);
+
+        await this.tgSend(chatId, result.response);
+      } catch (err) {
+        logger.error(`[Telegram] Error processing message from ${chatId}: ${(err as Error).message}`);
+        try {
+          await this.tgSend(chatId, "Something went wrong processing your message\\. Please try again\\.");
+        } catch {
+          // If even error message fails, just log it
+        }
+      }
     });
 
     // ─── WhatsApp Business API ───
@@ -849,6 +952,59 @@ export class Gateway {
     });
 
     logger.info("[Gateway] Shutdown complete");
+  }
+
+  // ─── Telegram Helpers ───
+  private async tgApi(method: string, body: Record<string, unknown>): Promise<{ ok: boolean; result?: Record<string, unknown> }> {
+    const resp = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return resp.json() as Promise<{ ok: boolean; result?: Record<string, unknown> }>;
+  }
+
+  private async tgSend(chatId: string, text: string): Promise<void> {
+    // Try MarkdownV2 first, fall back to plain text if it fails
+    const resp = await this.tgApi("sendMessage", {
+      chat_id: chatId,
+      text,
+      parse_mode: "MarkdownV2",
+    });
+    if (!resp.ok) {
+      // Retry without markdown formatting
+      await this.tgApi("sendMessage", {
+        chat_id: chatId,
+        text: text.replace(/\\([_*[\]()~`>#+\-=|{}.!])/g, "$1"),
+      });
+    }
+  }
+
+  private async tgSendVoice(chatId: string, audio: Buffer): Promise<void> {
+    const formData = new FormData();
+    formData.append("chat_id", chatId);
+    formData.append("voice", new Blob([new Uint8Array(audio)], { type: "audio/ogg" }), "voice.ogg");
+    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendVoice`, {
+      method: "POST",
+      body: formData,
+    });
+  }
+
+  private async registerTelegramWebhook(): Promise<void> {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const baseUrl = process.env.ASTRA_BASE_URL;
+    if (!token || !baseUrl || baseUrl.includes("localhost")) {
+      logger.info("[Telegram] Skipping webhook registration (no public URL). Use ngrok or set ASTRA_BASE_URL to a public URL.");
+      logger.info(`[Telegram] For testing, run: curl "https://api.telegram.org/bot${token}/setWebhook?url=YOUR_PUBLIC_URL/webhook/telegram"`);
+      return;
+    }
+    const webhookUrl = `${baseUrl}/webhook/telegram`;
+    const resp = await this.tgApi("setWebhook", { url: webhookUrl, allowed_updates: ["message", "callback_query"] });
+    if (resp.ok) {
+      logger.info(`[Telegram] Webhook registered: ${webhookUrl}`);
+    } else {
+      logger.warn(`[Telegram] Webhook registration failed: ${JSON.stringify(resp)}`);
+    }
   }
 
   private getActiveChannels(): string[] {
