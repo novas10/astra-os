@@ -1,0 +1,30 @@
+# Source
+src/
+packages/dashboard/src/
+packages/dashboard/node_modules/
+
+# Dev & Config
+.github/
+.claude/
+.astra-data/
+.astra-memory/
+deploy/
+e2e/
+load-tests/
+coverage/
+*.tsbuildinfo
+
+# Docker
+Dockerfile
+docker-compose.yml
+railway.toml
+render.yaml
+
+# Dev files
+.env
+.eslintrc*
+.prettierrc*
+tsconfig.json
+vitest.config.*
+playwright.config.*
+GUIDE.md

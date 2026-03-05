@@ -600,7 +600,7 @@ export default function WorkflowBuilderPage() {
       }
       return runWorkflow(savedId);
     },
-    onSuccess: (data) => setRunResult({ status: data.status, history: data.history }),
+    onSuccess: (data) => setRunResult({ status: data.status, history: data.history as { nodeId: string; result: unknown; timestamp: number }[] }),
   });
 
   const onConnect = useCallback(

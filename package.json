@@ -6,6 +6,21 @@
   "bin": {
     "astra-os": "dist/cli/onboard.js"
   },
+  "files": [
+    "dist/",
+    "public/",
+    "skills/",
+    "packages/astracloud/",
+    "src/docs/openapi.yaml",
+    ".env.example",
+    "setup.sh",
+    "setup.ps1",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc && cp src/docs/openapi.yaml dist/docs/openapi.yaml",

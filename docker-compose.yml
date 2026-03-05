@@ -14,8 +14,6 @@ services:
       - astra-memory:/app/.astra-memory
       - astra-logs:/app/logs
       - ./skills:/app/skills:ro
-    depends_on:
-      - redis
     restart: unless-stopped
     deploy:
       resources:
@@ -25,18 +23,38 @@ services:
         reservations:
           cpus: "0.5"
           memory: 256M
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
     networks:
       - astra-net
 
-  redis:
-    image: redis:7-alpine
-    container_name: astra-redis
-    expose:
-      - "6379"
+  # Dev mode with hot-reload: docker compose --profile dev up astra-dev
+  astra-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-builder
+    container_name: astra-dev
+    command: npx ts-node-dev --respawn --transpile-only src/index.ts
+    ports:
+      - "${PORT:-3000}:3000"
+      - "${CANVAS_PORT:-18793}:18793"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
     volumes:
-      - redis-data:/data
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass "${REDIS_PASSWORD:-astra-redis-dev}"
-    restart: unless-stopped
+      - ./src:/app/src
+      - ./skills:/app/skills
+      - ./packages:/app/packages
+      - astra-memory:/app/.astra-memory
+      - astra-logs:/app/logs
+    profiles:
+      - dev
     networks:
       - astra-net
 
@@ -56,7 +74,6 @@ volumes:
   astra-workspace:
   astra-memory:
   astra-logs:
-  redis-data:
   # qdrant-data:
 
 networks:
