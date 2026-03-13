@@ -933,7 +933,7 @@ export class Gateway {
       res.json({
         status: "operational",
         service: "AstraOS",
-        version: "4.0.0",
+        version: "4.2.0",
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         providers: this.providers.listProviders(),
