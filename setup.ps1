@@ -1,4 +1,4 @@
-# AstraOS v4.0 - One-Click Windows Setup Script
+# AstraOS v4.2 - One-Click Windows Setup Script
 # Tip: For an interactive wizard, run: npx astra-os
 
 $ErrorActionPreference = "Stop"
@@ -12,7 +12,7 @@ function Test-Command { param($cmd) return [bool](Get-Command $cmd -ErrorAction 
 
 Write-Host ""
 Write-Host "  =========================================" -ForegroundColor Magenta
-Write-Host "       AstraOS v4.0 Setup Installer        " -ForegroundColor Magenta
+Write-Host "       AstraOS v4.2 Setup Installer        " -ForegroundColor Magenta
 Write-Host "  =========================================" -ForegroundColor Magenta
 Write-Host "  Tip: For interactive wizard: npx astra-os" -ForegroundColor DarkGray
 Write-Host ""
@@ -148,7 +148,7 @@ Write-Step -step "7/7" -msg "Setup Complete!"
 
 Write-Host ""
 Write-Host "  =========================================" -ForegroundColor Green
-Write-Host "       AstraOS v4.0 is ready!              " -ForegroundColor Green
+Write-Host "       AstraOS v4.2 is ready!              " -ForegroundColor Green
 Write-Host "  =========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Start AstraOS:" -ForegroundColor Cyan

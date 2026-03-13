@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AstraOS v4.0 — One-Click Setup Script (macOS / Linux)
+# AstraOS v4.2 — One-Click Setup Script (macOS / Linux)
 # Usage: bash setup.sh
 set -euo pipefail
 
@@ -17,7 +17,7 @@ cd "$SCRIPT_DIR"
 
 echo ""
 echo -e "${MAGENTA}${BOLD}  =========================================${RESET}"
-echo -e "${MAGENTA}${BOLD}       AstraOS v4.0 Setup Installer        ${RESET}"
+echo -e "${MAGENTA}${BOLD}       AstraOS v4.2 Setup Installer        ${RESET}"
 echo -e "${MAGENTA}${BOLD}  =========================================${RESET}"
 echo -e "${DIM}  Tip: For an interactive wizard, run: npx astra-os${RESET}"
 echo ""
@@ -120,7 +120,7 @@ step 7 $TOTAL "Setup Complete!"
 
 echo ""
 echo -e "${GREEN}${BOLD}  =========================================${RESET}"
-echo -e "${GREEN}${BOLD}       AstraOS v4.0 is ready!              ${RESET}"
+echo -e "${GREEN}${BOLD}       AstraOS v4.2 is ready!              ${RESET}"
 echo -e "${GREEN}${BOLD}  =========================================${RESET}"
 echo ""
 echo -e "  ${CYAN}Start AstraOS:${RESET}"

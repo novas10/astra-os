@@ -978,7 +978,7 @@ export class Gateway {
     this.server.listen(this.port, () => {
       console.log(`
   ╔══════════════════════════════════════════════════════════════╗
-  ║            AstraOS v4.0 — AI Agent OS                       ║
+  ║            AstraOS v4.2 — AI Agent OS                       ║
   ║            Built in India for the World                     ║
   ╠══════════════════════════════════════════════════════════════╣
   ║  REST API     : http://localhost:${this.port}/api/chat                  ║

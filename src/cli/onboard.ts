@@ -93,7 +93,7 @@ ${C.cyan}${C.bold}
  /_/  |_|/____/ \\__//_/  /_/ \\____//____/
 ${C.reset}
 ${C.dim}  The AI Agent Operating System — Built in India${C.reset}
-${C.dim}  v4.0 | github.com/AstraOS-India/astra-os${C.reset}
+${C.dim}  v4.2 | github.com/AstraOS-India/astra-os${C.reset}
 `);
 
   // ─── Step 1: Environment Check ───
@@ -173,7 +173,7 @@ ${C.dim}  v4.0 | github.com/AstraOS-India/astra-os${C.reset}
   // ─── Step 4: Channel Setup ───
   step(4, TOTAL, "Channel Setup (optional)");
 
-  info("AstraOS supports 14+ channels: Telegram, WhatsApp, Discord, Slack, etc.");
+  info("AstraOS supports 21+ channels: Telegram, WhatsApp, Discord, Slack, Teams, IRC, LINE, etc.");
   const setupTelegram = await ask("Set up Telegram bot? (y/N)", "N");
   let telegramToken = "";
   if (setupTelegram.toLowerCase() === "y") {
@@ -195,7 +195,7 @@ ${C.dim}  v4.0 | github.com/AstraOS-India/astra-os${C.reset}
   step(6, TOTAL, "Write Configuration");
 
   const envPath = path.join(projectRoot, ".env");
-  const envExamplePath = path.join(projectRoot, "env.example");
+  const envExamplePath = path.join(projectRoot, ".env.example");
 
   if (fs.existsSync(envPath)) {
     const overwrite = await ask(".env already exists. Overwrite? (y/N)", "N");

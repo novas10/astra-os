@@ -56,7 +56,7 @@ AstraOS (Sanskrit: *Astra* = divine weapon / celestial tool) is the most complet
 | **GraphRAG Memory** | No | **FTS5 + Vector + Knowledge Graph** with RRF |
 | **Computer Use** | No | **Screenshot + click + type + scroll** GUI automation |
 | **Observability** | No | **OpenTelemetry** — traces, metrics, spans, histograms |
-| **Dashboard** | No | **React + Vite** — 11 pages, dark theme, workflow builder |
+| **Dashboard** | No | **React + Vite** — 17 pages, dark theme, workflow builder |
 | **Managed Hosting** | MyClaw.ai ($19/mo) | **AstraCloud** ($15/mo) — cheaper, more features |
 | **Setup Experience** | `openclaw onboard` | **`npx astra-os`** + `setup.sh` + `setup.ps1` + one-click deploy |
 
@@ -238,7 +238,7 @@ curl -X POST http://localhost:3000/api/voice/stt \
 ### Observability
 
 - **OpenTelemetry** — Built-in tracing, metrics, spans, counters, and histograms for every agent run, tool call, and LLM request
-- **Admin Dashboard** — React + Vite + Tailwind dark-mode dashboard with 11 pages: Home (stats), Agents, Conversations, Marketplace, Workflow Builder (React Flow), Memory (graph visualization), Traces, Settings, Plugins, Budget, i18n
+- **Admin Dashboard** — React + Vite + Tailwind dark-mode dashboard with 17 pages: Home (stats), Agents, Conversations, Skills, Workflows, Marketplace, Plugins, SDK Console, Traces, Memory, Security, Trading, Vault, Budget, i18n, Settings, Login
 
 ---
 
@@ -591,7 +591,7 @@ curl -X POST http://localhost:3000/api/skills/generate \
 
 ## Security
 
-AstraOS v4.0 takes a security-first approach with three dedicated subsystems:
+AstraOS v4.2 takes a security-first approach with three dedicated subsystems:
 
 ```
 Request → GatewayShield (CVE/CSRF/brute force/headers/IP)
@@ -735,7 +735,7 @@ MIT
 
 *Where there is Astra, there is victory.*
 
-**AstraOS v4.0** | Security-First | 14+ Channels | 55+ Skills | Talk Mode | Enterprise-Ready
+**AstraOS v4.2** | Security-First | 21+ Channels | 55+ Skills | Talk Mode | Enterprise-Ready
 
 Made in India
 
