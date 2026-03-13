@@ -2,7 +2,86 @@
 
 All notable changes to AstraOS are documented here.
 
-## [4.2.0] - 2026-03-01
+## [4.2.0] - 2026-03-13
+
+### Platform — One Step Ahead
+
+#### 8 New LLM Providers (4 → 12 total)
+- **AWS Bedrock** — Full SigV4 signing using Node.js crypto, Converse API
+- **Mistral** — mistral-large-latest, codestral, pixtral
+- **OpenRouter** — OpenAI-compatible with X-Title header, org/model routing
+- **Cohere** — v2 Chat API, content block parsing, TOOL_CALL handling
+- **Groq** — Ultra-fast inference, OpenAI-compatible
+- **DeepSeek** — deepseek-chat, deepseek-reasoner
+- **Together** — Open-source models (Llama, Mixtral)
+- **HuggingFace** — Per-model URL pattern inference
+
+#### 7 New Channel Adapters (14 → 21+ total)
+- **IRC** — Raw TCP/TLS, PING/PONG, PRIVMSG, auto-reconnect
+- **Twitch** — TMI over WSS, IRC tags parsing, channel join/part
+- **LINE** — Messaging API webhook, HMAC-SHA256 signature verification
+- **Feishu/Lark** — Event subscription, tenant access token lifecycle
+- **Mattermost** — WebSocket + REST, personal access token auth
+- **Nextcloud Talk** — OCS API long-polling, Basic auth
+- **Nostr** — NIP-01 events, NIP-04 AES-256-CBC encrypted DMs, multi-relay
+
+#### Advanced AI (NEW — no competitor has these)
+- **Agent Orchestrator** — 6 multi-agent patterns: pipeline, parallel, supervisor, debate, consensus, hierarchical. Execution tracing, retry with backoff
+- **Reasoning Engine** — 5 strategies: chain-of-thought, tree-of-thought, self-consistency, reflection, metacognition. Confidence scoring
+- **Real-time Collaboration** — Shared sessions with presence (active/idle/away), history replay, collaborative workflows, agent-to-agent messaging
+- **Model Fallback** — Circuit breaker (5 failures → open, 30s half-open), rolling 100-request health window, p50/p95/p99 latency, cost-aware routing
+- **Budget Manager** — Per-user/tenant/session token limits, cost calculation with MODEL_PRICING table, 80/90/100% alerts, usage analytics
+
+#### Plugin SDK (NEW)
+- **Plugin types** — AstraPlugin interface, PluginContext, PluginManifest
+- **PluginSDK** — definePlugin(), createPluginLogger(), createPluginConfig(), createPluginVault(), validateManifest()
+- **PluginLoader** — Dynamic loading from plugins/ directory, topological sort for dependency resolution, hot-reload via fs.watch
+- **PluginManager** — Lifecycle orchestrator, hook routing (onMessage, onResponse, onToolCall), circuit breaker health monitoring, cron scheduling
+- **3 example plugins** — hello-world, auto-tagger, usage-reporter
+
+#### 4 New Embedding Providers (2 → 6 total)
+- **Gemini** — text-embedding-004, 768 dimensions, outputDimensionality control
+- **Mistral** — mistral-embed, 1024 dimensions, native batch
+- **Voyage AI** — voyage-3, 1024 dimensions, native batch
+- **Cohere** — embed-v4.0, input_type semantics (search_document/search_query), `asQueryProvider()` helper
+
+#### 3 New TTS Engines (1 → 4 total)
+- **OpenAI TTS** — tts-1, tts-1-hd, gpt-4o-mini-tts; 6 voices (alloy, echo, fable, onyx, nova, shimmer)
+- **Edge TTS** — Free Microsoft Edge TTS via WebSocket, SSML, no API key needed
+- **Google Cloud TTS** — WaveNet/Neural2 voices, multi-language support
+
+#### i18n System (NEW — 7 languages)
+- Singleton I18n class with t(key, params?), CLDR pluralization via Intl.PluralRules
+- formatNumber(), formatCurrency(), formatDate(), formatRelativeTime()
+- Locale files: English, Hindi, Tamil, Chinese, Japanese, Spanish, Arabic
+
+#### Daemon Mode (NEW)
+- **DaemonManager** — Cross-platform: auto-detects OS, install/uninstall/start/stop/restart/status
+- **systemd** — Security-hardened unit file for Linux
+- **launchd** — macOS plist for persistent background service
+- **Windows** — Service wrapper for Windows Service Manager
+
+#### Dashboard — 3 New Pages (14 → 17 total)
+- **Plugins** — Plugin management with health monitoring, enable/disable, install
+- **Budget** — Usage tracking, cost analytics, alert thresholds, model pricing
+- **i18n** — Locale management, translation browser, format previews
+
+#### CI/CD Enhancements
+- **Security scanning job** — npm audit, secret detection, license compliance
+- **npm publish job** — Automatic npm publish on tagged releases with provenance
+- **Test count guard** — Warning if test count drops below 600
+
+#### Testing — 602 tests (293 → 602, +105%)
+- **llm-providers.test.ts** — 83 tests: all 8 providers, ProviderRegistry, ModelFallback, BudgetManager
+- **channel-adapters.test.ts** — 53 tests: all 7 new channel adapters
+- **plugins.test.ts** — 67 tests: PluginSDK, PluginLoader, PluginManager
+- **advanced-features.test.ts** — 106 tests: AgentOrchestrator, ReasoningEngine, RealtimeEngine, I18n, TTSProviders, DaemonManager
+- Fixed LINE adapter timingSafeEqual buffer length bug
+- Aligned gateway test with CVE-2026-25253 security hardening (query param auth rejection)
+
+#### Bug Fixes
+- **LINE adapter** — Fixed `timingSafeEqual` crash when signature lengths differ (added buffer length pre-check)
+- **Gateway static serving** — Dashboard now served via express.static in production (was missing)
 
 ### Vajra Trading Engine v3.1 — Complete Institutional Forex Arsenal
 

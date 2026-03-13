@@ -5,6 +5,7 @@ import {
   Brain, Settings, Activity, Shield, Zap, Lock,
   Code2, TrendingUp, Search, Bell, ChevronLeft,
   ChevronRight, Command, Moon, Sun, LogOut, User,
+  Puzzle, DollarSign, Globe,
 } from "lucide-react";
 import HomePage from "./pages/HomePage";
 import AgentsPage from "./pages/AgentsPage";
@@ -19,6 +20,9 @@ import SkillsPage from "./pages/SkillsPage";
 import VaultPage from "./pages/VaultPage";
 import SDKConsolePage from "./pages/SDKConsolePage";
 import TradingPage from "./pages/TradingPage";
+import PluginsPage from "./pages/PluginsPage";
+import BudgetPage from "./pages/BudgetPage";
+import I18nPage from "./pages/I18nPage";
 import LoginPage from "./pages/LoginPage";
 
 const NAV_SECTIONS = [
@@ -36,6 +40,7 @@ const NAV_SECTIONS = [
     items: [
       { to: "/workflows", icon: Workflow, label: "Workflows" },
       { to: "/marketplace", icon: Package, label: "Marketplace" },
+      { to: "/plugins", icon: Puzzle, label: "Plugins" },
       { to: "/sdk", icon: Code2, label: "SDK Console" },
     ],
   },
@@ -52,6 +57,8 @@ const NAV_SECTIONS = [
     label: "ADMIN",
     items: [
       { to: "/vault", icon: Lock, label: "Vault" },
+      { to: "/budget", icon: DollarSign, label: "Budget" },
+      { to: "/i18n", icon: Globe, label: "i18n" },
       { to: "/settings", icon: Settings, label: "Settings" },
     ],
   },
@@ -109,7 +116,7 @@ function Sidebar({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed
           {!collapsed && (
             <div className="animate-fade-in">
               <h1 className="text-base font-bold text-white tracking-tight">AstraOS</h1>
-              <p className="text-[10px] text-gray-600 font-medium">v4.0.1</p>
+              <p className="text-[10px] text-gray-600 font-medium">v4.2.0</p>
             </div>
           )}
         </div>
@@ -239,6 +246,9 @@ export default function App() {
             <Route path="/vault" element={<VaultPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/sdk" element={<SDKConsolePage />} />
+            <Route path="/plugins" element={<PluginsPage />} />
+            <Route path="/budget" element={<BudgetPage />} />
+            <Route path="/i18n" element={<I18nPage />} />
             <Route path="/trading" element={<TradingPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

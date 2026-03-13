@@ -33,6 +33,14 @@ const PROVIDERS = [
   { name: "OpenAI (GPT)", envKey: "OPENAI_API_KEY", models: "gpt-4o, o1, o3", icon: "O", color: "bg-green-500/20 text-green-400 border-green-500/30" },
   { name: "Google (Gemini)", envKey: "GEMINI_API_KEY", models: "gemini-2.5-pro, gemini-2.5-flash", icon: "G", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
   { name: "Ollama (Local)", envKey: "OLLAMA_BASE_URL", models: "llama3.1, mistral, codestral", icon: "L", color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
+  { name: "AWS Bedrock", envKey: "AWS_ACCESS_KEY_ID", models: "claude-3.5, titan, llama3", icon: "B", color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
+  { name: "Mistral", envKey: "MISTRAL_API_KEY", models: "mistral-large, codestral, pixtral", icon: "M", color: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30" },
+  { name: "OpenRouter", envKey: "OPENROUTER_API_KEY", models: "any model via routing", icon: "R", color: "bg-pink-500/20 text-pink-400 border-pink-500/30" },
+  { name: "Cohere", envKey: "COHERE_API_KEY", models: "command-r-plus, command-r", icon: "C", color: "bg-red-500/20 text-red-400 border-red-500/30" },
+  { name: "Groq", envKey: "GROQ_API_KEY", models: "llama-3.3-70b, mixtral", icon: "Q", color: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30" },
+  { name: "DeepSeek", envKey: "DEEPSEEK_API_KEY", models: "deepseek-chat, deepseek-reasoner", icon: "D", color: "bg-teal-500/20 text-teal-400 border-teal-500/30" },
+  { name: "Together", envKey: "TOGETHER_API_KEY", models: "llama-405B, mixtral-8x22B", icon: "T", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
+  { name: "HuggingFace", envKey: "HUGGINGFACE_API_KEY", models: "open-source models", icon: "H", color: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
 ];
 
 const SECURITY_ITEMS = [
