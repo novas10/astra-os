@@ -3,6 +3,10 @@ src/
 packages/dashboard/src/
 packages/dashboard/node_modules/
 
+# Source maps (not needed for end users)
+*.js.map
+*.d.ts.map
+
 # Dev & Config
 .github/
 .claude/

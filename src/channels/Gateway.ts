@@ -51,6 +51,7 @@ import { CredentialVault } from "../security/CredentialVault";
 import { CloudManager } from "../cloud/CloudManager";
 import { SkillSandbox } from "../security/SkillSandbox";
 import { SkillGenerator } from "../skills/SkillGenerator";
+import { createSDKRouter } from "../skills/SkillSDK";
 import { WorkflowEngine } from "../workflow/WorkflowEngine";
 import { MemoryEngine } from "../memory/MemoryEngine";
 import { SkillMigrator } from "../skills/SkillMigrator";
@@ -791,6 +792,9 @@ export class Gateway {
 
     // ─── Skill Generator ───
     this.app.use("/api/skills", this.skillGenerator.getRouter());
+
+    // ─── Skill SDK ───
+    this.app.use("/api/sdk", createSDKRouter());
 
     // ─── Skill Migrator (OpenClaw/ClawHub import) ───
     this.app.use("/api/skills/import", this.skillMigrator.getRouter());

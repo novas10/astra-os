@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: AstraOS API
-  version: 4.0.0
+  version: 4.0.1
   description: |
     AstraOS — The AI Agent Operating System.
     Multi-LLM, MCP, A2A, GraphRAG, 14+ channels, 55+ skills, enterprise-grade security.
@@ -59,6 +59,16 @@ tags:
     description: Skill scaffolding from templates
   - name: SkillMigrator
     description: OpenClaw/ClawHub skill import
+  - name: SkillSDK
+    description: Developer SDK for skill creation, validation, testing, and packaging
+  - name: Digest
+    description: Daily digest briefing
+  - name: Workflows
+    description: Workflow builder and execution
+  - name: Memory
+    description: Knowledge base and memory search
+  - name: WebChat
+    description: WebChat embed and configuration
   - name: A2A
     description: Agent-to-Agent protocol
   - name: Telemetry
@@ -2183,6 +2193,524 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+
+  # ─── Daily Digest ───────────────────────────────────────────────────────
+
+  /api/digest:
+    get:
+      tags: [Digest]
+      summary: Get today's daily digest
+      operationId: getDigest
+      responses:
+        "200":
+          description: Daily digest content (weather, news, tasks, crypto, quote)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  digest:
+                    type: string
+                  generatedAt:
+                    type: string
+                    format: date-time
+
+  /api/digest/config:
+    get:
+      tags: [Digest]
+      summary: Get daily digest configuration
+      operationId: getDigestConfig
+      responses:
+        "200":
+          description: Current digest settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  city:
+                    type: string
+                  sections:
+                    type: array
+                    items:
+                      type: string
+                  schedule:
+                    type: string
+    put:
+      tags: [Digest]
+      summary: Update daily digest configuration
+      operationId: updateDigestConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                city:
+                  type: string
+                sections:
+                  type: array
+                  items:
+                    type: string
+                schedule:
+                  type: string
+      responses:
+        "200":
+          description: Updated digest config
+
+  # ─── Agent Lifecycle ───────────────────────────────────────────────────
+
+  /api/agents/{id}:
+    get:
+      tags: [Agents]
+      summary: Get agent by ID
+      operationId: getAgent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  status:
+                    type: string
+                    enum: [running, paused, stopped]
+                  skills:
+                    type: array
+                    items:
+                      type: string
+        "404":
+          description: Agent not found
+
+  /api/agents/{id}/pause:
+    post:
+      tags: [Agents]
+      summary: Pause a running agent
+      operationId: pauseAgent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent paused
+        "404":
+          description: Agent not found
+
+  /api/agents/{id}/resume:
+    post:
+      tags: [Agents]
+      summary: Resume a paused agent
+      operationId: resumeAgent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent resumed
+        "404":
+          description: Agent not found
+
+  # ─── Workflows ─────────────────────────────────────────────────────────
+
+  /api/workflows:
+    get:
+      tags: [Workflows]
+      summary: List all workflows
+      operationId: listWorkflows
+      responses:
+        "200":
+          description: Array of workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    steps:
+                      type: integer
+                    status:
+                      type: string
+                      enum: [active, draft, disabled]
+    post:
+      tags: [Workflows]
+      summary: Create a new workflow
+      operationId: createWorkflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, steps]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                steps:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      config:
+                        type: object
+      responses:
+        "201":
+          description: Workflow created
+
+  /api/workflows/{id}:
+    get:
+      tags: [Workflows]
+      summary: Get workflow by ID
+      operationId: getWorkflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Workflow details
+        "404":
+          description: Workflow not found
+    delete:
+      tags: [Workflows]
+      summary: Delete a workflow
+      operationId: deleteWorkflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Workflow deleted
+
+  /api/workflows/{id}/run:
+    post:
+      tags: [Workflows]
+      summary: Execute a workflow
+      operationId: runWorkflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  type: object
+      responses:
+        "200":
+          description: Workflow execution result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runId:
+                    type: string
+                  status:
+                    type: string
+                  output:
+                    type: object
+
+  # ─── Memory ────────────────────────────────────────────────────────────
+
+  /api/memory/search:
+    get:
+      tags: [Memory]
+      summary: Search the knowledge base
+      operationId: searchMemory
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        content:
+                          type: string
+                        score:
+                          type: number
+                        source:
+                          type: string
+
+  # ─── Admin Settings ────────────────────────────────────────────────────
+
+  /api/admin/settings:
+    get:
+      tags: [Admin]
+      summary: Get admin settings
+      operationId: getSettings
+      responses:
+        "200":
+          description: Current system settings
+          content:
+            application/json:
+              schema:
+                type: object
+    put:
+      tags: [Admin]
+      summary: Update admin settings
+      operationId: updateSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Settings updated
+
+  # ─── Skill SDK ─────────────────────────────────────────────────────────
+
+  /api/sdk/templates:
+    get:
+      tags: [SkillSDK]
+      summary: List available skill templates
+      operationId: listSDKTemplates
+      security: []
+      responses:
+        "200":
+          description: Array of 23 skill templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  templates:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        category:
+                          type: string
+
+  /api/sdk/create:
+    post:
+      tags: [SkillSDK]
+      summary: Create a new skill from template
+      operationId: createSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                template:
+                  type: string
+                  enum: [basic, tool, api-connector, webhook-handler, database-query, email-manager, calendar-assistant, task-tracker, note-taker, code-reviewer, ci-cd-monitor, log-analyzer, git-assistant, data-analyzer, web-scraper, report-generator, slack-bot, notification-hub, translation, summarizer, smart-home, expense-tracker, stock-watcher]
+                author:
+                  type: string
+                description:
+                  type: string
+                triggers:
+                  type: array
+                  items:
+                    type: string
+                permissions:
+                  type: array
+                  items:
+                    type: string
+                category:
+                  type: string
+      responses:
+        "200":
+          description: Skill created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  directory:
+                    type: string
+
+  /api/sdk/validate:
+    post:
+      tags: [SkillSDK]
+      summary: Validate a skill manifest and security
+      operationId: sdkValidateSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+                  description: Path to skill directory or SKILL.md
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                  securityIssues:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        severity:
+                          type: string
+                          enum: [critical, warning, info]
+                        rule:
+                          type: string
+                        description:
+                          type: string
+
+  /api/sdk/test:
+    post:
+      tags: [SkillSDK]
+      summary: Test skill trigger matching
+      operationId: testSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+                message:
+                  type: string
+                  description: Single test message
+                messages:
+                  type: array
+                  items:
+                    type: string
+                  description: Batch of test messages
+      responses:
+        "200":
+          description: Test results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skillName:
+                    type: string
+                  triggered:
+                    type: boolean
+                  matchedTriggers:
+                    type: array
+                    items:
+                      type: string
+                  promptGenerated:
+                    type: string
+
+  /api/sdk/package:
+    post:
+      tags: [SkillSDK]
+      summary: Package a skill for marketplace publishing
+      operationId: packageSkill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+      responses:
+        "200":
+          description: Package result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  version:
+                    type: string
+                  files:
+                    type: array
+                    items:
+                      type: string
+                  size:
+                    type: integer
+                  hash:
+                    type: string
 
 components:
   securitySchemes:
