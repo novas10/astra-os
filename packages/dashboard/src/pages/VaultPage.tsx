@@ -79,11 +79,11 @@ export default function VaultPage() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Vault</h1>
+          <h1 className="text-lg font-bold text-white">Vault</h1>
           <p className="text-gray-500 mt-1">Encrypted credential storage and access audit</p>
         </div>
         <button
@@ -209,42 +209,42 @@ export default function VaultPage() {
         <div className="card overflow-hidden p-0">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Name</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Service</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Value</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Expires</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Last Used</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Actions</th>
+              <tr className="border-b border-white/[0.04]">
+                <th className="text-left table-header">Name</th>
+                <th className="text-left table-header">Service</th>
+                <th className="text-left table-header">Value</th>
+                <th className="text-left table-header">Expires</th>
+                <th className="text-left table-header">Last Used</th>
+                <th className="text-left table-header">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
               {credsLoading
                 ? Array.from({ length: 4 }).map((_, i) => (
                     <tr key={i}>
-                      <td className="px-6 py-4"><div className="h-4 bg-gray-800 rounded w-32 animate-pulse" /></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-gray-800 rounded w-20 animate-pulse" /></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-gray-800 rounded w-24 animate-pulse" /></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-gray-800 rounded w-24 animate-pulse" /></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-gray-800 rounded w-24 animate-pulse" /></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-gray-800 rounded w-16 animate-pulse" /></td>
+                      <td className="table-cell"><div className="h-4 bg-white/[0.04] rounded w-32 animate-pulse" /></td>
+                      <td className="table-cell"><div className="h-4 bg-white/[0.04] rounded w-20 animate-pulse" /></td>
+                      <td className="table-cell"><div className="h-4 bg-white/[0.04] rounded w-24 animate-pulse" /></td>
+                      <td className="table-cell"><div className="h-4 bg-white/[0.04] rounded w-24 animate-pulse" /></td>
+                      <td className="table-cell"><div className="h-4 bg-white/[0.04] rounded w-24 animate-pulse" /></td>
+                      <td className="table-cell"><div className="h-4 bg-white/[0.04] rounded w-16 animate-pulse" /></td>
                     </tr>
                   ))
                 : filteredCreds.map((cred) => (
-                    <tr key={cred.id} className="hover:bg-gray-900/50">
-                      <td className="px-6 py-4">
+                    <tr key={cred.id} className="table-row">
+                      <td className="table-cell">
                         <div className="flex items-center gap-2">
                           <Key className="w-4 h-4 text-astra-400" />
                           <span className="text-sm font-medium text-white">{cred.name}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="table-cell">
                         <span className="badge-blue text-xs">{cred.service}</span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="table-cell">
                         <span className="text-sm font-mono text-gray-400">{cred.maskedValue}</span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="table-cell">
                         {cred.expiresAt ? (
                           <span className={`text-sm ${
                             new Date(cred.expiresAt) < new Date() ? "text-red-400" :
@@ -259,10 +259,10 @@ export default function VaultPage() {
                           <span className="text-sm text-gray-500">No expiry</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-400">
+                      <td className="table-cell text-sm text-gray-400">
                         {cred.lastUsed ? new Date(cred.lastUsed).toLocaleDateString() : "Never"}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="table-cell">
                         <button
                           onClick={() => deleteCredential(cred.id)}
                           className="btn-secondary text-xs py-1.5 px-3 text-red-400 hover:text-red-300 flex items-center gap-1"
@@ -290,28 +290,28 @@ export default function VaultPage() {
         <div className="card overflow-hidden p-0">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Action</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Credential</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Actor</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Time</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">IP</th>
+              <tr className="border-b border-white/[0.04]">
+                <th className="text-left table-header">Action</th>
+                <th className="text-left table-header">Credential</th>
+                <th className="text-left table-header">Actor</th>
+                <th className="text-left table-header">Time</th>
+                <th className="text-left table-header">IP</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
               {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-900/50">
-                  <td className="px-6 py-4">
+                <tr key={log.id} className="table-row">
+                  <td className="table-cell">
                     <span className={`text-xs px-2 py-1 rounded-md font-medium ${getActionStyle(log.action)}`}>
                       {log.action}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-white">{log.credentialName}</td>
-                  <td className="px-6 py-4 text-sm text-gray-400 font-mono">{log.actor}</td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
+                  <td className="table-cell text-sm text-white">{log.credentialName}</td>
+                  <td className="table-cell text-sm text-gray-400 font-mono">{log.actor}</td>
+                  <td className="table-cell text-sm text-gray-400">
                     {new Date(log.timestamp).toLocaleString()}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 font-mono">{log.ip}</td>
+                  <td className="table-cell text-sm text-gray-500 font-mono">{log.ip}</td>
                 </tr>
               ))}
               {logs.length === 0 && (

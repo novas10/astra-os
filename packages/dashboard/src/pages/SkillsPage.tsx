@@ -113,11 +113,11 @@ export default function SkillsPage() {
   ];
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-lg font-bold text-white flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
@@ -163,7 +163,7 @@ export default function SkillsPage() {
             className="input w-full pl-10"
           />
         </div>
-        <div className="flex bg-gray-800 rounded-lg border border-gray-700">
+        <div className="flex bg-white/[0.04] rounded-lg border border-white/[0.06]">
           <button onClick={() => setViewMode("grid")} className={`px-3 py-2 text-xs rounded-l-lg ${viewMode === "grid" ? "bg-astra-600/20 text-astra-400" : "text-gray-400"}`}>Grid</button>
           <button onClick={() => setViewMode("list")} className={`px-3 py-2 text-xs rounded-r-lg ${viewMode === "list" ? "bg-astra-600/20 text-astra-400" : "text-gray-400"}`}>List</button>
         </div>
@@ -186,7 +186,7 @@ export default function SkillsPage() {
                 className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   activeCategory === cat
                     ? "text-white bg-astra-600/20 border-l-2 border-astra-500"
-                    : "text-gray-400 hover:text-white hover:bg-gray-800/50"
+                    : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
                 }`}
               >
                 <CatIcon className="w-4 h-4" />
@@ -203,9 +203,9 @@ export default function SkillsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="card animate-pulse">
-                  <div className="h-6 bg-gray-800 rounded w-2/3 mb-4" />
-                  <div className="h-4 bg-gray-800 rounded w-1/2 mb-2" />
-                  <div className="h-4 bg-gray-800 rounded w-3/4" />
+                  <div className="h-6 bg-white/[0.04] rounded w-2/3 mb-4" />
+                  <div className="h-4 bg-white/[0.04] rounded w-1/2 mb-2" />
+                  <div className="h-4 bg-white/[0.04] rounded w-3/4" />
                 </div>
               ))}
             </div>
@@ -218,7 +218,7 @@ export default function SkillsPage() {
 
                 if (viewMode === "list") {
                   return (
-                    <div key={skill.name} className="card hover:border-gray-700 transition-colors flex items-center gap-4 py-3">
+                    <div key={skill.name} className="card hover:border-white/[0.06] transition-colors flex items-center gap-4 py-3">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${catColor.split(" ")[1]}`}>
                         <SkillIcon className={`w-5 h-5 ${catColor.split(" ")[0]}`} />
                       </div>
@@ -238,7 +238,7 @@ export default function SkillsPage() {
                 }
 
                 return (
-                  <div key={skill.name} className="card hover:border-gray-700 transition-colors group">
+                  <div key={skill.name} className="card hover:border-white/[0.06] transition-colors group">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${catColor.split(" ")[1]}`}>
@@ -284,11 +284,11 @@ export default function SkillsPage() {
                       )}
                     </div>
 
-                    <div className="mt-3 pt-3 border-t border-gray-800">
+                    <div className="mt-3 pt-3 border-t border-white/[0.04]">
                       <p className="text-xs text-gray-500 mb-1.5">Triggers</p>
                       <div className="flex flex-wrap gap-1">
                         {skill.triggers.map((trigger) => (
-                          <span key={trigger} className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded border border-gray-700">
+                          <span key={trigger} className="text-xs bg-white/[0.04] text-gray-400 px-2 py-0.5 rounded border border-white/[0.06]">
                             {trigger}
                           </span>
                         ))}

@@ -62,11 +62,11 @@ export default function MemoryPage() {
   ];
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-lg font-bold text-white flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
               <Brain className="w-5 h-5 text-white" />
             </div>
@@ -104,7 +104,7 @@ export default function MemoryPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-800/50 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 bg-white/[0.03] rounded-lg p-1 w-fit">
         {[
           { id: "search" as const, label: "Search", icon: Search },
           { id: "graph" as const, label: "Knowledge Graph", icon: Network },
@@ -187,13 +187,13 @@ export default function MemoryPage() {
               </h3>
               <div className="space-y-3">
                 {results.map((entry, i) => (
-                  <div key={i} className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors">
+                  <div key={i} className="bg-white/[0.04] rounded-lg p-4 border border-white/[0.06] hover:border-white/[0.08] transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="badge-blue">{entry.source}</span>
                         {entry.score !== undefined && (
                           <div className="flex items-center gap-1">
-                            <div className="w-16 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                            <div className="w-16 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-gradient-to-r from-astra-500 to-blue-500 rounded-full"
                                 style={{ width: `${Math.max(entry.score * 100, 10)}%` }}
@@ -229,21 +229,21 @@ export default function MemoryPage() {
           </h3>
 
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-gray-800/50 rounded-lg p-4 text-center">
-              <p className="text-2xl font-bold text-white">{MOCK_STATS.graph.entities}</p>
+            <div className="bg-white/[0.03] rounded-lg p-4 text-center">
+              <p className="text-lg font-bold text-white">{MOCK_STATS.graph.entities}</p>
               <p className="text-xs text-gray-400 mt-1">Entities</p>
             </div>
-            <div className="bg-gray-800/50 rounded-lg p-4 text-center">
-              <p className="text-2xl font-bold text-white">{MOCK_STATS.graph.relationships}</p>
+            <div className="bg-white/[0.03] rounded-lg p-4 text-center">
+              <p className="text-lg font-bold text-white">{MOCK_STATS.graph.relationships}</p>
               <p className="text-xs text-gray-400 mt-1">Relationships</p>
             </div>
-            <div className="bg-gray-800/50 rounded-lg p-4 text-center">
-              <p className="text-2xl font-bold text-white">{MOCK_STATS.graph.communities}</p>
+            <div className="bg-white/[0.03] rounded-lg p-4 text-center">
+              <p className="text-lg font-bold text-white">{MOCK_STATS.graph.communities}</p>
               <p className="text-xs text-gray-400 mt-1">Communities</p>
             </div>
           </div>
 
-          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <div className="bg-white/[0.04] rounded-lg p-6 border border-white/[0.06]">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Network className="w-6 h-6 text-yellow-400" />
@@ -268,7 +268,7 @@ export default function MemoryPage() {
           <div className="mt-4 space-y-2">
             <p className="text-sm text-gray-400 font-medium">Recent Entities</p>
             {["AstraOS", "Workflow Engine", "Telegram Bot", "GraphRAG", "Docker Sandbox", "SSO SAML"].map((entity, i) => (
-              <div key={entity} className="flex items-center gap-3 bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+              <div key={entity} className="flex items-center gap-3 bg-white/[0.03] rounded-lg p-3 border border-white/[0.06]/50">
                 <div className={`w-3 h-3 rounded-full ${["bg-blue-400", "bg-green-400", "bg-purple-400", "bg-yellow-400", "bg-cyan-400", "bg-orange-400"][i]}`} />
                 <span className="text-sm text-white font-medium">{entity}</span>
                 <span className="text-xs text-gray-500 ml-auto">{Math.floor(Math.random() * 20 + 3)} connections</span>
@@ -294,7 +294,7 @@ export default function MemoryPage() {
                     <span className="text-gray-400">{name}</span>
                     <span className="text-white">{(size / 1024).toFixed(1)} MB / {(maxSize / 1024).toFixed(0)} MB</span>
                   </div>
-                  <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-white/[0.04] rounded-full overflow-hidden">
                     <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${(size / maxSize) * 100}%` }} />
                   </div>
                 </div>

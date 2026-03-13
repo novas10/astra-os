@@ -88,11 +88,11 @@ export default function AgentsPage() {
   };
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-lg font-bold text-white flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-astra-500 to-blue-600 rounded-xl flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
             </div>
@@ -211,7 +211,7 @@ export default function AgentsPage() {
                       className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
                         newAgent.channels.includes(ch)
                           ? "bg-astra-600/20 border-astra-500/50 text-astra-400"
-                          : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600"
+                          : "bg-white/[0.04] border-white/[0.06] text-gray-400 hover:border-white/[0.08]"
                       }`}
                     >
                       {ch}
@@ -244,9 +244,9 @@ export default function AgentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="card animate-pulse">
-              <div className="h-6 bg-gray-800 rounded w-2/3 mb-4" />
-              <div className="h-4 bg-gray-800 rounded w-1/2 mb-2" />
-              <div className="h-4 bg-gray-800 rounded w-3/4" />
+              <div className="h-6 bg-white/[0.04] rounded w-2/3 mb-4" />
+              <div className="h-4 bg-white/[0.04] rounded w-1/2 mb-2" />
+              <div className="h-4 bg-white/[0.04] rounded w-3/4" />
             </div>
           ))}
         </div>
@@ -258,7 +258,7 @@ export default function AgentsPage() {
             const isExpanded = expandedAgent === agent.id;
 
             return (
-              <div key={agent.id} className="card hover:border-gray-700 transition-all duration-200 group">
+              <div key={agent.id} className="card hover:border-white/[0.06] transition-all duration-200 group">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-astra-600/30 to-blue-600/30 rounded-lg flex items-center justify-center ring-1 ring-astra-500/20">
@@ -296,13 +296,13 @@ export default function AgentsPage() {
                 </div>
 
                 {isExpanded && (
-                  <div className="mt-4 pt-4 border-t border-gray-800 space-y-3">
+                  <div className="mt-4 pt-4 border-t border-white/[0.04] space-y-3">
                     <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div className="bg-gray-800/50 rounded-lg p-3">
+                      <div className="bg-white/[0.03] rounded-lg p-3">
                         <p className="text-gray-500 text-xs">Messages</p>
                         <p className="text-white font-bold text-lg">--</p>
                       </div>
-                      <div className="bg-gray-800/50 rounded-lg p-3">
+                      <div className="bg-white/[0.03] rounded-lg p-3">
                         <p className="text-gray-500 text-xs">Tokens Used</p>
                         <p className="text-white font-bold text-lg">--</p>
                       </div>
@@ -313,7 +313,7 @@ export default function AgentsPage() {
                   </div>
                 )}
 
-                <div className="flex gap-2 mt-4 pt-4 border-t border-gray-800">
+                <div className="flex gap-2 mt-4 pt-4 border-t border-white/[0.04]">
                   <button
                     onClick={() => agent.status === "active" ? pauseMutation.mutate(agent.id) : resumeMutation.mutate(agent.id)}
                     disabled={pauseMutation.isPending || resumeMutation.isPending}
@@ -342,7 +342,7 @@ export default function AgentsPage() {
 
           {sortedAgents.length === 0 && !isLoading && (
             <div className="card col-span-full text-center py-16">
-              <div className="w-16 h-16 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-white/[0.04] rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Bot className="w-8 h-8 text-gray-600" />
               </div>
               <h3 className="text-lg font-medium text-gray-400">

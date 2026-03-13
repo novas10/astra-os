@@ -79,11 +79,11 @@ export default function SecurityPage() {
   const gradeColors = getGradeColor(grade);
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Security</h1>
+          <h1 className="text-lg font-bold text-white">Security</h1>
           <p className="text-gray-500 mt-1">Security posture, protections, and event monitoring</p>
         </div>
         <div className="flex items-center gap-3">
@@ -118,7 +118,7 @@ export default function SecurityPage() {
             <div>
               <h3 className="text-lg font-semibold text-white">Security Grade</h3>
               <p className="text-sm text-gray-400 mt-1">Score: {score}/100</p>
-              <div className="mt-2 h-2 w-40 bg-gray-800 rounded-full overflow-hidden">
+              <div className="mt-2 h-2 w-40 bg-white/[0.04] rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${grade.startsWith("A") ? "bg-green-500" : grade.startsWith("B") ? "bg-yellow-500" : "bg-red-500"}`}
                   style={{ width: `${score}%` }}
@@ -135,7 +135,7 @@ export default function SecurityPage() {
               <ShieldCheck className="w-4 h-4 text-green-400" />
               <p className="text-xs text-gray-400">Active</p>
             </div>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-lg font-bold text-white">
               {protections.filter((p) => p.status === "active").length}
             </p>
           </div>
@@ -144,7 +144,7 @@ export default function SecurityPage() {
               <ShieldAlert className="w-4 h-4 text-yellow-400" />
               <p className="text-xs text-gray-400">Warnings</p>
             </div>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-lg font-bold text-white">
               {protections.filter((p) => p.status === "warning").length}
             </p>
           </div>
@@ -153,14 +153,14 @@ export default function SecurityPage() {
               <Ban className="w-4 h-4 text-red-400" />
               <p className="text-xs text-gray-400">Blocked IPs</p>
             </div>
-            <p className="text-2xl font-bold text-white">{blockedIps.length}</p>
+            <p className="text-lg font-bold text-white">{blockedIps.length}</p>
           </div>
           <div className="stat-card">
             <div className="flex items-center gap-2 mb-1">
               <AlertTriangle className="w-4 h-4 text-orange-400" />
               <p className="text-xs text-gray-400">Events (24h)</p>
             </div>
-            <p className="text-2xl font-bold text-white">{events.length}</p>
+            <p className="text-lg font-bold text-white">{events.length}</p>
           </div>
         </div>
 
@@ -202,7 +202,7 @@ export default function SecurityPage() {
           {protections.map((protection) => (
             <div
               key={protection.name}
-              className="flex items-center justify-between bg-gray-800 rounded-lg p-4 border border-gray-700"
+              className="flex items-center justify-between bg-white/[0.04] rounded-lg p-4 border border-white/[0.06]"
             >
               <div className="flex items-center gap-3">
                 {getStatusIcon(protection.status)}
@@ -228,24 +228,24 @@ export default function SecurityPage() {
         <div className="card overflow-hidden p-0">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-800">
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">IP Address</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Reason</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Blocked At</th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Expires</th>
+              <tr className="border-b border-white/[0.04]">
+                <th className="text-left table-header">IP Address</th>
+                <th className="text-left table-header">Reason</th>
+                <th className="text-left table-header">Blocked At</th>
+                <th className="text-left table-header">Expires</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
               {blockedIps.map((entry) => (
-                <tr key={entry.ip} className="hover:bg-gray-900/50">
-                  <td className="px-6 py-4">
+                <tr key={entry.ip} className="table-row">
+                  <td className="table-cell">
                     <span className="text-sm font-mono text-red-400">{entry.ip}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400">{entry.reason}</td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
+                  <td className="table-cell text-sm text-gray-400">{entry.reason}</td>
+                  <td className="table-cell text-sm text-gray-400">
                     {new Date(entry.blockedAt).toLocaleString()}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="table-cell">
                     {entry.expiresAt ? (
                       <span className="text-sm text-yellow-400">
                         {new Date(entry.expiresAt).toLocaleString()}

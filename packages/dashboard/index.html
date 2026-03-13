@@ -3,12 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AstraOS — Admin Dashboard</title>
+    <title>AstraOS — Dashboard</title>
+    <meta name="description" content="AstraOS Admin Dashboard — AI Agent Operating System" />
+    <meta name="theme-color" content="#0A0A0F" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+      /* Loading screen */
+      #root:empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: #0A0A0F;
+      }
+      #root:empty::after {
+        content: '';
+        width: 32px;
+        height: 32px;
+        border: 2px solid rgba(99, 102, 241, 0.2);
+        border-top-color: #6366f1;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
   </head>
-  <body class="bg-gray-950 text-white antialiased">
+  <body class="bg-[#0A0A0F] text-white antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

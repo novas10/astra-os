@@ -26,10 +26,10 @@ export default function TracesPage() {
   const histograms = metricsData?.histograms || {};
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Traces & Metrics</h1>
+          <h1 className="text-lg font-bold text-white">Traces & Metrics</h1>
           <p className="text-gray-500 mt-1">OpenTelemetry-compatible observability</p>
         </div>
       </div>
@@ -39,26 +39,26 @@ export default function TracesPage() {
         {Object.entries(counters).map(([name, value]) => (
           <div key={name} className="stat-card">
             <p className="text-xs text-gray-400 truncate">{name}</p>
-            <p className="text-2xl font-bold text-white mt-1">{String(value)}</p>
+            <p className="text-lg font-bold text-white mt-1">{String(value)}</p>
           </div>
         ))}
         {Object.keys(counters).length === 0 && (
           <>
             <div className="stat-card">
               <p className="text-xs text-gray-400">Total Requests</p>
-              <p className="text-2xl font-bold text-white mt-1">0</p>
+              <p className="text-lg font-bold text-white mt-1">0</p>
             </div>
             <div className="stat-card">
               <p className="text-xs text-gray-400">Tool Calls</p>
-              <p className="text-2xl font-bold text-white mt-1">0</p>
+              <p className="text-lg font-bold text-white mt-1">0</p>
             </div>
             <div className="stat-card">
               <p className="text-xs text-gray-400">Self-Heals</p>
-              <p className="text-2xl font-bold text-white mt-1">0</p>
+              <p className="text-lg font-bold text-white mt-1">0</p>
             </div>
             <div className="stat-card">
               <p className="text-xs text-gray-400">Errors</p>
-              <p className="text-2xl font-bold text-white mt-1">0</p>
+              <p className="text-lg font-bold text-white mt-1">0</p>
             </div>
           </>
         )}
@@ -119,32 +119,32 @@ export default function TracesPage() {
       <div className="card overflow-hidden p-0">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-800">
-              <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Span</th>
-              <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Duration</th>
-              <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Time</th>
-              <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Attributes</th>
+            <tr className="border-b border-white/[0.04]">
+              <th className="text-left table-header">Span</th>
+              <th className="text-left table-header">Duration</th>
+              <th className="text-left table-header">Time</th>
+              <th className="text-left table-header">Attributes</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
             {tracesLoading
               ? Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-800 rounded w-40 animate-pulse" /></td>
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-800 rounded w-20 animate-pulse" /></td>
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-800 rounded w-32 animate-pulse" /></td>
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-800 rounded w-24 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-4 bg-white/[0.04] rounded w-40 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-4 bg-white/[0.04] rounded w-20 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-4 bg-white/[0.04] rounded w-32 animate-pulse" /></td>
+                    <td className="table-cell"><div className="h-4 bg-white/[0.04] rounded w-24 animate-pulse" /></td>
                   </tr>
                 ))
               : filteredTraces.map((trace) => (
-                  <tr key={trace.id} className="hover:bg-gray-900/50">
-                    <td className="px-6 py-4">
+                  <tr key={trace.id} className="table-row">
+                    <td className="table-cell">
                       <div className="flex items-center gap-2">
                         <Activity className="w-4 h-4 text-astra-400" />
                         <span className="text-sm font-medium text-white">{trace.name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="table-cell">
                       <span className={`text-sm font-mono ${
                         trace.duration > 5000 ? "text-red-400" :
                         trace.duration > 1000 ? "text-yellow-400" : "text-green-400"
@@ -152,13 +152,13 @@ export default function TracesPage() {
                         {trace.duration > 1000 ? `${(trace.duration / 1000).toFixed(2)}s` : `${trace.duration}ms`}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-400">
+                    <td className="table-cell text-sm text-gray-400">
                       {new Date(trace.startTime).toLocaleTimeString()}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="table-cell">
                       <div className="flex flex-wrap gap-1">
                         {Object.entries(trace.attributes || {}).slice(0, 3).map(([k, v]) => (
-                          <span key={k} className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">
+                          <span key={k} className="text-xs bg-white/[0.04] text-gray-400 px-2 py-0.5 rounded">
                             {k}: {String(v)}
                           </span>
                         ))}

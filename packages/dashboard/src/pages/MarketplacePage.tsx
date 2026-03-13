@@ -57,10 +57,10 @@ export default function MarketplacePage() {
   const installedNames = new Set((installedSkills || []).map((s) => s.name));
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Skills Marketplace</h1>
+          <h1 className="text-lg font-bold text-white">Skills Marketplace</h1>
           <p className="text-gray-500 mt-1">
             Browse and install skills from AstraHub — {installedSkills?.length ?? 0} installed
           </p>
@@ -88,7 +88,7 @@ export default function MarketplacePage() {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeCategory === cat.id
                 ? "bg-astra-600 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white"
+                : "bg-white/[0.04] text-gray-400 hover:bg-white/[0.08] hover:text-white"
             }`}
           >
             {cat.name}
@@ -102,7 +102,7 @@ export default function MarketplacePage() {
           const isInstalled = installedNames.has(skill.id);
 
           return (
-            <div key={skill.id} className="card hover:border-gray-700 transition-colors group">
+            <div key={skill.id} className="card hover:border-white/[0.06] transition-colors group">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-astra-500/20 to-astra-700/20 rounded-lg flex items-center justify-center">
@@ -178,24 +178,24 @@ export default function MarketplacePage() {
           <div className="card overflow-hidden p-0">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Name</th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Version</th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Status</th>
-                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Description</th>
+                <tr className="border-b border-white/[0.04]">
+                  <th className="text-left table-header">Name</th>
+                  <th className="text-left table-header">Version</th>
+                  <th className="text-left table-header">Status</th>
+                  <th className="text-left table-header">Description</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
                 {installedSkills!.map((skill) => (
-                  <tr key={skill.name} className="hover:bg-gray-900/50">
-                    <td className="px-6 py-4 text-sm font-medium text-white">{skill.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-400 font-mono">{skill.version}</td>
-                    <td className="px-6 py-4">
+                  <tr key={skill.name} className="table-row">
+                    <td className="table-cell text-sm font-medium text-white">{skill.name}</td>
+                    <td className="table-cell text-sm text-gray-400 font-mono">{skill.version}</td>
+                    <td className="table-cell">
                       <span className={skill.enabled ? "badge-green" : "badge-red"}>
                         {skill.enabled ? "Enabled" : "Disabled"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-400">{skill.description}</td>
+                    <td className="table-cell text-sm text-gray-400">{skill.description}</td>
                   </tr>
                 ))}
               </tbody>

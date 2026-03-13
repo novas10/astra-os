@@ -95,10 +95,10 @@ export default function SettingsPage() {
   );
 
   return (
-    <div className="p-8">
+    <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+        <h1 className="text-lg font-bold text-white flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-gray-500 to-gray-700 rounded-xl flex items-center justify-center">
             <Settings className="w-5 h-5 text-white" />
           </div>
@@ -117,7 +117,7 @@ export default function SettingsPage() {
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${
                 activeSection === id
                   ? "text-white bg-astra-600/20 border-l-2 border-astra-500"
-                  : "text-gray-400 hover:text-white hover:bg-gray-800/50"
+                  : "text-gray-400 hover:text-white hover:bg-white/[0.04]"
               }`}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
@@ -219,7 +219,7 @@ export default function SettingsPage() {
                 </h3>
                 <div className="space-y-4">
                   {PROVIDERS.map((provider) => (
-                    <div key={provider.name} className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors">
+                    <div key={provider.name} className="bg-white/[0.04] rounded-lg p-4 border border-white/[0.06] hover:border-white/[0.08] transition-colors">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center border text-sm font-bold ${provider.color}`}>
@@ -308,7 +308,7 @@ export default function SettingsPage() {
                     { name: "SAML 2.0", desc: "Enterprise SSO via SAML providers", status: "Available" },
                     { name: "OIDC", desc: "OpenID Connect for Google, Azure AD, Okta", status: "Available" },
                   ].map((sso) => (
-                    <div key={sso.name} className="flex items-center justify-between bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div key={sso.name} className="flex items-center justify-between bg-white/[0.04] rounded-lg p-4 border border-white/[0.06]">
                       <div>
                         <p className="text-sm font-medium text-white">{sso.name}</p>
                         <p className="text-xs text-gray-500">{sso.desc}</p>
@@ -345,7 +345,7 @@ export default function SettingsPage() {
                   {[
                     { name: "Admin", email: "admin@astra-os.dev", role: "admin", color: "bg-astra-900/50 text-astra-400 border-astra-800" },
                   ].map((user) => (
-                    <div key={user.email} className="flex items-center justify-between bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div key={user.email} className="flex items-center justify-between bg-white/[0.04] rounded-lg p-4 border border-white/[0.06]">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-astra-600 rounded-full flex items-center justify-center">
                           <Users className="w-4 h-4 text-white" />
@@ -360,7 +360,7 @@ export default function SettingsPage() {
                   ))}
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-gray-800">
+                <div className="mt-4 pt-4 border-t border-white/[0.04]">
                   <p className="text-xs text-gray-500 mb-3">Available Roles</p>
                   <div className="grid grid-cols-2 gap-2">
                     {[
@@ -369,7 +369,7 @@ export default function SettingsPage() {
                       { role: "Operator", desc: "Monitor and manage operations" },
                       { role: "Viewer", desc: "Read-only dashboard access" },
                     ].map(({ role, desc }) => (
-                      <div key={role} className="bg-gray-800/50 rounded-lg p-3">
+                      <div key={role} className="bg-white/[0.03] rounded-lg p-3">
                         <p className="text-sm font-medium text-white">{role}</p>
                         <p className="text-xs text-gray-500">{desc}</p>
                       </div>
@@ -392,7 +392,7 @@ export default function SettingsPage() {
                 <p className="text-sm text-gray-400 mb-4">
                   Manage organizations, plans, quotas, and API key scoping.
                 </p>
-                <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                <div className="bg-white/[0.04] rounded-lg p-4 border border-white/[0.06]">
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="text-sm font-medium text-white">Default Organization</p>
@@ -421,7 +421,7 @@ export default function SettingsPage() {
                 </h3>
                 <div className="space-y-3">
                   {SECURITY_ITEMS.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div key={item.name} className="flex items-center justify-between bg-white/[0.04] rounded-lg p-4 border border-white/[0.06]">
                       <div>
                         <p className="text-sm font-medium text-white">{item.name}</p>
                         <p className="text-xs text-gray-500">{item.desc}</p>
@@ -455,7 +455,7 @@ export default function SettingsPage() {
                 </p>
                 <div className="space-y-2">
                   {CHANNELS.map((ch) => (
-                    <div key={ch.name} className="flex items-center justify-between bg-gray-800 rounded-lg p-3 border border-gray-700 hover:border-gray-600 transition-colors">
+                    <div key={ch.name} className="flex items-center justify-between bg-white/[0.04] rounded-lg p-3 border border-white/[0.06] hover:border-white/[0.08] transition-colors">
                       <div className="flex items-center gap-3">
                         <ch.icon className="w-4 h-4 text-gray-500" />
                         <div>
@@ -494,7 +494,7 @@ export default function SettingsPage() {
                     { name: "Logs", path: "logs/", size: "3.1 MB" },
                     { name: "Workspace", path: "workspace/", size: "1.8 MB" },
                   ].map((store) => (
-                    <div key={store.name} className="flex items-center justify-between bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div key={store.name} className="flex items-center justify-between bg-white/[0.04] rounded-lg p-4 border border-white/[0.06]">
                       <div>
                         <p className="text-sm font-medium text-white">{store.name}</p>
                         <p className="text-xs text-gray-500 font-mono">{store.path}</p>
@@ -545,11 +545,11 @@ export default function SettingsPage() {
                   "Backup completed",
                   "Daily digest",
                 ].map((event) => (
-                  <div key={event} className="flex items-center justify-between bg-gray-800 rounded-lg p-3 border border-gray-700">
+                  <div key={event} className="flex items-center justify-between bg-white/[0.04] rounded-lg p-3 border border-white/[0.06]">
                     <span className="text-sm text-white">{event}</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" defaultChecked className="sr-only peer" />
-                      <div className="w-9 h-5 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-astra-600" />
+                      <div className="w-9 h-5 bg-white/[0.06] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-astra-600" />
                     </label>
                   </div>
                 ))}
@@ -572,7 +572,7 @@ export default function SettingsPage() {
                         className={`p-4 rounded-lg border text-center text-sm font-medium transition-colors ${
                           theme === "Dark"
                             ? "bg-astra-600/20 border-astra-500/50 text-astra-400"
-                            : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600"
+                            : "bg-white/[0.04] border-white/[0.06] text-gray-400 hover:border-white/[0.08]"
                         }`}
                       >
                         {theme}
