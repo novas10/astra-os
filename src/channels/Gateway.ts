@@ -1,13 +1,17 @@
 /**
- * AstraOS v3.5 — Gateway.ts
- * The central nervous system. 14+ channel adapters, all in one gateway.
+ * AstraOS v4.2 — Gateway.ts
+ * The central nervous system. 21+ channel adapters, 12 LLM providers, all in one gateway.
  * WhatsApp + Telegram + Discord + Slack + Teams + Signal + Matrix + Google Chat +
- * iMessage + Zalo + WebChat + Phone + REST + WebSocket
+ * iMessage + Zalo + WebChat + Phone + IRC + Twitch + LINE + Feishu + Mattermost +
+ * Nextcloud + Nostr + REST + WebSocket
  *
+ * LLM: Anthropic, OpenAI, Gemini, Ollama, Bedrock, Mistral, OpenRouter, Cohere, Groq,
+ *      DeepSeek, Together, HuggingFace (with intelligent fallback + budget management)
  * Security: GatewayShield (CVE-2026-25253 prevention, CSRF, brute force, exposure detection)
  * Skills: 55+ bundled skills, SkillGenerator (23 templates), SkillMigrator (OpenClaw compat)
  * Enterprise: SSO, RBAC, Audit, Billing, Data Residency, Edge Runtime, Credential Vault
- * Note: Vajra Trading Engine extracted to standalone project
+ * AI: Agent Orchestrator, Reasoning Engine, Real-time Collaboration
+ * i18n: 7 languages (en, hi, ta, zh, ja, es, ar)
  */
 
 import express from "express";
@@ -31,6 +35,13 @@ import { iMessageAdapter } from "./iMessageAdapter";
 import { ZaloAdapter } from "./ZaloAdapter";
 import { WebChatAdapter } from "./WebChatAdapter";
 import { PhoneAdapter } from "./PhoneAdapter";
+import { IRCAdapter } from "./IRCAdapter";
+import { TwitchAdapter } from "./TwitchAdapter";
+import { LINEAdapter } from "./LINEAdapter";
+import { FeishuAdapter } from "./FeishuAdapter";
+import { MattermostAdapter } from "./MattermostAdapter";
+import { NextcloudAdapter } from "./NextcloudAdapter";
+import { NostrAdapter } from "./NostrAdapter";
 import { v4 as uuid } from "uuid";
 import { logger } from "../utils/logger";
 import { createAuthMiddleware } from "../middleware/auth";
@@ -102,6 +113,13 @@ export class Gateway {
   private zaloAdapter: ZaloAdapter;
   private webChatAdapter: WebChatAdapter;
   private phoneAdapter: PhoneAdapter;
+  private ircAdapter: IRCAdapter;
+  private twitchAdapter: TwitchAdapter;
+  private lineAdapter: LINEAdapter;
+  private feishuAdapter: FeishuAdapter;
+  private mattermostAdapter: MattermostAdapter;
+  private nextcloudAdapter: NextcloudAdapter;
+  private nostrAdapter: NostrAdapter;
 
   // Agent instances per session
   private agents: Map<string, AgentLoop> = new Map();
@@ -173,6 +191,13 @@ export class Gateway {
     this.zaloAdapter = new ZaloAdapter();
     this.webChatAdapter = new WebChatAdapter();
     this.phoneAdapter = new PhoneAdapter();
+    this.ircAdapter = new IRCAdapter();
+    this.twitchAdapter = new TwitchAdapter();
+    this.lineAdapter = new LINEAdapter();
+    this.feishuAdapter = new FeishuAdapter();
+    this.mattermostAdapter = new MattermostAdapter();
+    this.nextcloudAdapter = new NextcloudAdapter();
+    this.nostrAdapter = new NostrAdapter();
   }
 
   private getOrCreateAgent(sessionId: string, channelId: string, userId: string): AgentLoop {
@@ -989,6 +1014,13 @@ export class Gateway {
       { adapter: this.imessageAdapter, name: "iMessage", envKey: "BLUEBUBBLES_PASSWORD" },
       { adapter: this.zaloAdapter, name: "Zalo", envKey: "ZALO_OA_ACCESS_TOKEN" },
       { adapter: this.phoneAdapter, name: "Phone", envKey: "TELNYX_API_KEY" },
+      { adapter: this.ircAdapter, name: "IRC", envKey: "IRC_SERVER" },
+      { adapter: this.twitchAdapter, name: "Twitch", envKey: "TWITCH_ACCESS_TOKEN" },
+      { adapter: this.lineAdapter, name: "LINE", envKey: "LINE_CHANNEL_ACCESS_TOKEN" },
+      { adapter: this.feishuAdapter, name: "Feishu", envKey: "FEISHU_APP_ID" },
+      { adapter: this.mattermostAdapter, name: "Mattermost", envKey: "MATTERMOST_URL" },
+      { adapter: this.nextcloudAdapter, name: "Nextcloud", envKey: "NEXTCLOUD_URL" },
+      { adapter: this.nostrAdapter, name: "Nostr", envKey: "NOSTR_PRIVATE_KEY" },
     ];
 
     // WebChat always initializes (serves its own WebSocket)
@@ -1109,6 +1141,13 @@ export class Gateway {
     if (process.env.BLUEBUBBLES_PASSWORD) channels.push("iMessage");
     if (process.env.ZALO_OA_ACCESS_TOKEN) channels.push("Zalo");
     if (process.env.TELNYX_API_KEY) channels.push("Phone");
+    if (process.env.IRC_SERVER) channels.push("IRC");
+    if (process.env.TWITCH_ACCESS_TOKEN) channels.push("Twitch");
+    if (process.env.LINE_CHANNEL_ACCESS_TOKEN) channels.push("LINE");
+    if (process.env.FEISHU_APP_ID) channels.push("Feishu");
+    if (process.env.MATTERMOST_URL) channels.push("Mattermost");
+    if (process.env.NEXTCLOUD_URL) channels.push("Nextcloud");
+    if (process.env.NOSTR_PRIVATE_KEY) channels.push("Nostr");
     return channels;
   }
 }

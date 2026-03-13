@@ -80,11 +80,175 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
   }
 }
 
+// --- Gemini Embeddings ---
+export class GeminiEmbeddingProvider implements EmbeddingProvider {
+  name = "gemini";
+  dimensions = 768;
+  private apiKey: string;
+  private model: string;
+
+  constructor(apiKey?: string, model?: string) {
+    this.apiKey = apiKey || process.env.GEMINI_API_KEY || "";
+    this.model = model || "text-embedding-004";
+  }
+
+  async embed(text: string): Promise<EmbeddingResult> {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:embedContent?key=${this.apiKey}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: `models/${this.model}`,
+        content: { parts: [{ text }] },
+        outputDimensionality: this.dimensions,
+      }),
+    });
+
+    if (!res.ok) throw new Error(`Gemini embedding failed: ${res.status}`);
+    const data = (await res.json()) as { embedding: { values: number[] } };
+    return { vector: data.embedding.values, dimensions: data.embedding.values.length };
+  }
+
+  async embedBatch(texts: string[]): Promise<EmbeddingResult[]> {
+    // Gemini embedContent doesn't support native batch; use sequential calls
+    return Promise.all(texts.map((t) => this.embed(t)));
+  }
+}
+
+// --- Mistral Embeddings ---
+export class MistralEmbeddingProvider implements EmbeddingProvider {
+  name = "mistral";
+  dimensions = 1024;
+  private apiKey: string;
+  private model: string;
+
+  constructor(apiKey?: string, model?: string) {
+    this.apiKey = apiKey || process.env.MISTRAL_API_KEY || "";
+    this.model = model || "mistral-embed";
+  }
+
+  async embed(text: string): Promise<EmbeddingResult> {
+    const results = await this.embedBatch([text]);
+    return results[0];
+  }
+
+  async embedBatch(texts: string[]): Promise<EmbeddingResult[]> {
+    const res = await fetch("https://api.mistral.ai/v1/embeddings", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model: this.model, input: texts }),
+    });
+
+    if (!res.ok) throw new Error(`Mistral embedding failed: ${res.status}`);
+    const data = (await res.json()) as { data: Array<{ embedding: number[] }> };
+    return data.data.map((d) => ({ vector: d.embedding, dimensions: d.embedding.length }));
+  }
+}
+
+// --- Voyage AI Embeddings ---
+export class VoyageEmbeddingProvider implements EmbeddingProvider {
+  name = "voyage";
+  dimensions = 1024;
+  private apiKey: string;
+  private model: string;
+
+  constructor(apiKey?: string, model?: string) {
+    this.apiKey = apiKey || process.env.VOYAGE_API_KEY || "";
+    this.model = model || "voyage-3";
+  }
+
+  async embed(text: string): Promise<EmbeddingResult> {
+    const results = await this.embedBatch([text]);
+    return results[0];
+  }
+
+  async embedBatch(texts: string[]): Promise<EmbeddingResult[]> {
+    const res = await fetch("https://api.voyageai.com/v1/embeddings", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model: this.model, input: texts }),
+    });
+
+    if (!res.ok) throw new Error(`Voyage embedding failed: ${res.status}`);
+    const data = (await res.json()) as { data: Array<{ embedding: number[] }> };
+    return data.data.map((d) => ({ vector: d.embedding, dimensions: d.embedding.length }));
+  }
+}
+
+// --- Cohere Embeddings ---
+export class CohereEmbeddingProvider implements EmbeddingProvider {
+  name = "cohere";
+  dimensions = 1024;
+  private apiKey: string;
+  private model: string;
+  private inputType: string;
+
+  constructor(apiKey?: string, model?: string, inputType?: string) {
+    this.apiKey = apiKey || process.env.COHERE_API_KEY || "";
+    this.model = model || "embed-v4.0";
+    this.inputType = inputType || "search_document";
+  }
+
+  async embed(text: string): Promise<EmbeddingResult> {
+    const results = await this.embedBatch([text]);
+    return results[0];
+  }
+
+  async embedBatch(texts: string[]): Promise<EmbeddingResult[]> {
+    const res = await fetch("https://api.cohere.com/v2/embed", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: this.model,
+        texts,
+        input_type: this.inputType,
+        embedding_types: ["float"],
+      }),
+    });
+
+    if (!res.ok) throw new Error(`Cohere embedding failed: ${res.status}`);
+    const data = (await res.json()) as {
+      embeddings: { float: number[][] };
+    };
+    return data.embeddings.float.map((vec) => ({ vector: vec, dimensions: vec.length }));
+  }
+
+  /** Create a query-optimized instance for search queries */
+  asQueryProvider(): CohereEmbeddingProvider {
+    return new CohereEmbeddingProvider(this.apiKey, this.model, "search_query");
+  }
+}
+
 // --- Provider Factory ---
 export function createEmbeddingProvider(): EmbeddingProvider | null {
   if (process.env.OPENAI_API_KEY) {
     logger.info("[Memory] Using OpenAI embeddings (text-embedding-3-small)");
     return new OpenAIEmbeddingProvider();
+  }
+  if (process.env.GEMINI_API_KEY) {
+    logger.info("[Memory] Using Gemini embeddings (text-embedding-004)");
+    return new GeminiEmbeddingProvider();
+  }
+  if (process.env.COHERE_API_KEY) {
+    logger.info("[Memory] Using Cohere embeddings (embed-v4.0)");
+    return new CohereEmbeddingProvider();
+  }
+  if (process.env.MISTRAL_API_KEY) {
+    logger.info("[Memory] Using Mistral embeddings (mistral-embed)");
+    return new MistralEmbeddingProvider();
+  }
+  if (process.env.VOYAGE_API_KEY) {
+    logger.info("[Memory] Using Voyage AI embeddings (voyage-3)");
+    return new VoyageEmbeddingProvider();
   }
   if (process.env.OLLAMA_BASE_URL || process.env.OLLAMA_EMBEDDING_MODEL) {
     logger.info("[Memory] Using Ollama local embeddings");

@@ -1,0 +1,56 @@
+[Unit]
+Description=AstraOS — Autonomous AI Agent Operating System
+Documentation=https://github.com/astra-os/astra-os
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=astra
+Group=astra
+WorkingDirectory=/opt/astra-os
+
+# Entry point
+ExecStart=/usr/bin/node /opt/astra-os/dist/index.js
+ExecReload=/bin/kill -s HUP $MAINPID
+
+# Environment
+EnvironmentFile=-/opt/astra-os/.env
+Environment=NODE_ENV=production
+Environment=LOG_FORMAT=json
+
+# Restart policy
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# Logging — all output goes to journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=astra-os
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/opt/astra-os /var/log/astra-os
+
+# Resource limits
+LimitNOFILE=65536
+MemoryMax=2G
+CPUQuota=200%
+TasksMax=256
+
+# Graceful shutdown (SIGTERM → 30s → SIGKILL)
+TimeoutStopSec=30
+KillMode=mixed
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

@@ -1,7 +1,7 @@
 {
   "name": "astra-os",
-  "version": "4.0.1",
-  "description": "AstraOS — The most complete AI agent operating system. Multi-LLM, MCP, A2A, GraphRAG, Computer Use, RBAC, Multi-Tenancy, Marketplace (55+ skills), Admin Dashboard, Workflow Builder, SSO (SAML+OIDC), Audit Log, Data Residency, Billing (Stripe), Edge Runtime (Ollama), 14+ channels (incl. Zalo, WebChat, Phone), GatewayShield security, CredentialVault, SkillSandbox (Ed25519 signing), SkillGenerator (23 templates), OpenClaw migration, config-first SOUL.md, Docker sandbox, browser CDP, voice, Canvas/A2UI, multi-agent, streaming, observability. Built in India.",
+  "version": "4.2.0",
+  "description": "AstraOS — The most complete AI agent operating system. 12 LLM providers (Anthropic, OpenAI, Gemini, Ollama, Bedrock, Mistral, OpenRouter, Cohere, Groq, DeepSeek, Together, HuggingFace), 21+ channels (Telegram, WhatsApp, Discord, Slack, Teams, Signal, Matrix, Google Chat, iMessage, Zalo, WebChat, Phone, IRC, Twitch, LINE, Feishu, Mattermost, Nextcloud, Nostr), MCP, A2A, GraphRAG, Plugin SDK, Agent Orchestrator (6 multi-agent patterns), Reasoning Engine, Real-time Collaboration, Model Fallback (circuit breaker), Budget Manager, 6 embedding providers, 4 TTS engines, i18n (7 languages), Daemon mode, RBAC, SSO, Billing, GatewayShield, 55+ skills. Built in India.",
   "main": "dist/index.js",
   "bin": {
     "astra-os": "dist/cli/onboard.js"

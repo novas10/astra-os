@@ -46,4 +46,4 @@ export interface LLMProvider {
   }): Promise<LLMResponse>;
 }
 
-export type ProviderType = "anthropic" | "openai" | "gemini" | "ollama";
+export type ProviderType = "anthropic" | "openai" | "gemini" | "ollama" | "bedrock" | "mistral" | "openrouter" | "cohere" | "groq" | "deepseek" | "together" | "huggingface";

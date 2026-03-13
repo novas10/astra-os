@@ -134,7 +134,7 @@ describe("Auth Middleware (createAuthMiddleware)", () => {
       expect((res._body as any).error).toContain("Invalid API key");
     });
 
-    it("should accept api_key from query params (WebSocket upgrade)", () => {
+    it("should reject api_key from query params (CVE-2026-25253 prevention)", () => {
       const middleware = createAuthMiddleware({ apiKeys });
       const req = mockReq({
         headers: {} as any,
@@ -145,7 +145,8 @@ describe("Auth Middleware (createAuthMiddleware)", () => {
 
       middleware(req, res as unknown as Response, next);
 
-      expect(next).toHaveBeenCalled();
+      expect(next).not.toHaveBeenCalled();
+      expect(res._status).toBe(401);
     });
   });
 
